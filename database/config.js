@@ -1,4 +1,4 @@
-const mysql = require('mysql2')
+const mysql = require('mysql2/promise')
 
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
@@ -11,7 +11,4 @@ const pool = mysql.createPool({
     queueLimit: 0 // Sin límite de consultas en cola
 })
 
-// Exportar una promesa para usar async/await
-const db = pool.promise();
-
-module.exports = db;
+module.exports = pool;

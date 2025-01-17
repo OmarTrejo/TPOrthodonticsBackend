@@ -1,4 +1,15 @@
 const {response} = require('express');
+const User = require('../models/user/userModel');
+
+const getUsers = async (req, res= response) => {
+    try {
+        const users = await User.getAll();
+        if(!users) return res.status(404).json({msg: 'No se encontraron usuarios'});
+        res.status(200).json({msg:'Ok', data:users});
+    } catch (error) {
+        res.status(500).json({msg: error.message});
+    }
+}
 
 const usuariosGet = (req, res = response) => {
     const {q , nombre = "No name", apikey, page = 1, limit } = req.query; // request.query obtiene los parametos que son opcionales en una ruta http example http://localhost:8080/api/usuarios?q="Hola"&nombre="Omar Trejo"
@@ -53,5 +64,6 @@ module.exports = {
     usuariosPut,
     usuariosPost,
     usuariosDelete,
-    usuariosPatch
+    usuariosPatch,
+    getUsers
 }

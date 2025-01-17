@@ -4,11 +4,12 @@ const { usuariosGet,
     usuariosPut, 
     usuariosPost, 
     usuariosDelete, 
-    usuariosPatch } = require('../controllers/user.controller');
+    usuariosPatch, 
+    getUsers} = require('../controllers/user.controller');
 
 const router = Router();
 
-router.get('/', usuariosGet);
+router.get('/', getUsers);
 router.put('/:id', usuariosPut);
 router.post('/', usuariosPost);
 router.delete('/', usuariosDelete);

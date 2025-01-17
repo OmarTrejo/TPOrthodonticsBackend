@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const errorHandler = require('./errorHandler');
+const authenticate = require('./auth');
 
 class Server {
 
@@ -26,6 +28,11 @@ class Server {
         // Directorio Público
         this.app.use( express.static('public') );
 
+        // JWT auth
+        // this.app.use(authenticate)
+
+        // Manejo de erorres
+        this.app.use(errorHandler);
     }
 
     routes () {
