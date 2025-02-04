@@ -1,8 +1,7 @@
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import pool from "../database/config.js"
-import * as res from 'express/lib/response';
+const pool = require('../database/config');
+const bcrypt = require('bcrypt');
 
+// Login that require user and password
 const login = async (req, res) => {
     const { email, password } = req.body;
 
@@ -30,4 +29,43 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { login };
+const validateMFA = async (req, res) => {
+    const { userId, mfaCode } = req.body;
+
+    try {
+        const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+
+        if (rows.length === 0) {
+            return res.status(401).json({ message: 'Usuario no encontrado' });
+        }
+
+        const user = rows[0];
+
+        const mfaMatch = await bcrypt.compare(mfaCode, user.mfa_code);
+
+        if (!mfaMatch) {
+            return res.status(401).json({ message: 'Código MFA inválido' });
+        }
+
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.json({ token });
+    } catch (error) {
+        console.error('Error al validar MFA:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+
+}
+
+const createUser = async( req, res ) =>  {
+    const { name, email, password } = req.body;
+
+    try {
+        const encryptPassword = bcrypt.hashSync(password, 10);
+        const [rows] = await pool.query('INSERT INTO users (name, username, email, password) VALUES (?, ?, ?)', [name, email, encryptPassword]);
+    } catch (error) {
+        
+    }
+}
+
+module.exports = { login, validateMFA };
