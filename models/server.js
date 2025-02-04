@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const errorHandler = require('./errorHandler');
-const authenticate = require('./auth');
+// const errorHandler = require('../middlewares/errorHandler');
 
 class Server {
 
@@ -32,7 +31,7 @@ class Server {
         // this.app.use(authenticate)
 
         // Manejo de erorres
-        this.app.use(errorHandler);
+        // this.app.use(errorHandler);
     }
 
     routes () {

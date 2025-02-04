@@ -1,9 +1,9 @@
 const {response} = require('express');
-const User = require('../models/user/userModel');
+const pool = require("../database/config.js");
 
 const getUsers = async (req, res= response) => {
     try {
-        const users = await User.getAll();
+        const [users] = await pool.query('SELECT * FROM users');
         if(!users) return res.status(404).json({msg: 'No se encontraron usuarios'});
         res.status(200).json({msg:'Ok', data:users});
     } catch (error) {
