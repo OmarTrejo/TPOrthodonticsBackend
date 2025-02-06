@@ -1,5 +1,6 @@
 const pool = require('../database/config');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // Login that require user and password
 const login = async (req, res) => {
@@ -9,7 +10,7 @@ const login = async (req, res) => {
         const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
 
         if (rows.length === 0) {
-            return res.status(401).json({ message: 'Credenciales inválidas' });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         const user = rows[0];
@@ -68,4 +69,21 @@ const createUser = async( req, res ) =>  {
     }
 }
 
-module.exports = { login, validateMFA };
+// Static user
+const users = [{id: 1, username: "otrejo@md360.com.mx", password:"123456"}]
+
+// Login with values statics
+const loginManual = async (req, res) => {
+    const { username, password } = req.body;
+
+    const user = users.find(u=> u.username===username && u.password === password);
+    if (!user) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.json({ token });
+}
+
+module.exports = { login, validateMFA, loginManual };

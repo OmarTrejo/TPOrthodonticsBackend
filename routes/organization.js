@@ -18,7 +18,11 @@ router.post(
 router.get('/getAll', [], getAll);
 router.get('/getById/:id', [], getById);
 router.delete('/delete/:id', [], deleteOrganization);
-router.put('/update/:id', [], updateOrganization);
+router.put('/update/:id', [
+    body("name").notEmpty().withMessage("Name is required"),
+    body("commun_name").notEmpty().withMessage("Commun name is required"),
+    validateRequest
+], updateOrganization);
 router.post('/update/:id', [], restoreOrganization);
 
 module.exports = router;
