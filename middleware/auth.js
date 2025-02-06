@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken')
 
 const authenticateUser = (req, res, next) => {
     const token = req.header('Authorization')?.split(' ')[1];
-    console.log(token);
 
     if (!token) return res.status(401).json({ message: 'Anauthorized access, token not found' });
 

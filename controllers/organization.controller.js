@@ -2,12 +2,13 @@ const pool = require('../database/config');
 
 const addOrganization = async(req, res, next) => {
     const {name, commun_name, country_id, state, city, address } = req.body;
-    
+    const user_id = req.user.id;
+
     try {
-        const [result] = await pool.query('INSERT INTO organization (name, commun_name, country_id, state_province, city, address) VALUES (?, ?, ?, ?, ?, ?)', [name, commun_name, country_id, state, city, address])
+        const [result] = await pool.query('INSERT INTO organization (name, commun_name, country_id, state_province, city, address, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [name, commun_name, country_id, state, city, address, user_id, user_id])
 
         if (result.affectedRows === 0) {
-            return res.status(500).json({ status: false, message: 'Error to create Country/DC. Please try again later.', data });
+            return res.status(500).json({ status: false, message: 'Error to create Country/DC. Please try again later.', data:[] });
         }
 
         res.status(201).json({status: true, message: 'Country/DC registered successfully', data: result.insertId });
@@ -22,6 +23,11 @@ const getAll = async(req, res, next) => {
 
     try {
         const [rows] = await pool.query('SELECT * FROM vw_organizations WHERE status = ?', [status]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ status: false, message: "Country/DC's not found", data:[] });
+        }
+
         res.status(201).json({status: true, message: 'Successfully', data: rows });
     } catch (error) {
         next(error)
@@ -30,9 +36,13 @@ const getAll = async(req, res, next) => {
 
 const getById = async(req, res, next) => {
     const {id} = req.params;
-    console.log(id);
     try {
         const [rows] = await pool.query('SELECT id_organization, name, commun_name, country_id, state_province, city, address FROM organization WHERE id_organization = ?', [id]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ status: false, message: 'Country/DC not found', data:[] });
+        }
+
         res.status(201).json({status: true, message: 'Successfully', data: rows });
     } catch (error) {
         next(error)
@@ -41,12 +51,12 @@ const getById = async(req, res, next) => {
 
 const deleteOrganization = async(req, res, next) => {
     const {id} = req.params;
-    console.log(id);
+    const user_id = req.user.id;
     try {
-        const [rows] = await pool.query('UPDATE organization SET status = 0 WHERE id_organization = ?', [id]);
+        const [rows] = await pool.query('UPDATE organization SET status = 0, updated_by = ? WHERE id_organization = ?', [user_id, id]);
 
         if (rows.affectedRows === 0) {
-            return res.status(500).json({ status: false, message: 'Error to delete Country/DC. Please try again later.', data });
+            return res.status(500).json({ status: false, message: 'Error to delete Country/DC. Please try again later.', data:[] });
         }
         res.status(201).json({status: true, message: 'Country/DC deleted successfully', data: rows });
     } catch (error) {
@@ -57,11 +67,11 @@ const deleteOrganization = async(req, res, next) => {
 const updateOrganization = async (req, res, next) => {
     const {id} = req.params;
     const {name, commun_name, country_id, state, city, address } = req.body;
-
+    const user_id = req.user.id;
     try {
-        const [result] = await pool.query('UPDATE organization SET name = ?, commun_name = ?, country_id = ?, state_province = ?, city = ?, address = ?, updated_at = NOW() WHERE id_organization = ?', [name, commun_name, country_id, state, city, address, id])
+        const [result] = await pool.query('UPDATE organization SET name = ?, commun_name = ?, country_id = ?, state_province = ?, city = ?, address = ?, updated_at = NOW(), updated_by = ? WHERE id_organization = ?', [name, commun_name, country_id, state, city, address, user_id, id])
         if (result.affectedRows === 0) {
-            return res.status(500).json({ status: false, message: 'Error to update Country/DC. Please try again later.', data });
+            return res.status(500).json({ status: false, message: 'Error to update Country/DC. Please try again later.', data:[]  });
         }
 
         res.status(201).json({status: true, message: 'Country/DC updated successfully', data: result });
@@ -73,11 +83,11 @@ const updateOrganization = async (req, res, next) => {
 
 const restoreOrganization = async (req, res, next) => {
     const {id} = req.params;
-
+    const user_id = req.user.id;
     try {
-        const [result] = await pool.query('UPDATE organization SET status = 1 WHERE id_organization = ?', [id])
+        const [result] = await pool.query('UPDATE organization SET status = 1, updated_by = ? WHERE id_organization = ?', [user_id ,id])
         if (result.affectedRows === 0) {
-            return res.status(500).json({ status: false, message: 'Error to restore Country/DC. Please try again later.', data });
+            return res.status(500).json({ status: false, message: 'Error to restore Country/DC. Please try again later.', data:[] });
         }
 
         res.status(201).json({status: true, message: 'Country/DC restored successfully', data: result });
