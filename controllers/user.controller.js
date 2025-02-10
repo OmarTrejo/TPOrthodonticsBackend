@@ -1,5 +1,8 @@
 const {response} = require('express');
 const pool = require("../database/config.js");
+const { generateTempPassword, encryptPassword } = require('../utils/password.js');
+
+const STATUS_USER_PENDING_ACTIVATION = 3;
 
 const getUsers = async (req, res= response) => {
     try {
@@ -8,6 +11,33 @@ const getUsers = async (req, res= response) => {
         res.status(200).json({msg:'Ok', data:users});
     } catch (error) {
         res.status(500).json({msg: error.message});
+    }
+}
+
+const addUser = async(req, res, next) => {
+    const { first_name, last_name, email, phone_number, address, role_id, dc_id, customer_id = '' } = req.body;
+
+    try {
+        // Create a username with email
+        const username = email.split('@')[0];
+
+        // Create new password
+        const temp_password = generateTempPassword(15);
+
+        console.log(temp_password);
+
+        const hash_password = encryptPassword(temp_password);
+
+        const [result] = await pool.query('INSERT INTO users (username, first_name, last_name, email, phone_number, address, password, role_id, dc_id, customer_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [username, first_name, last_name, email, phone_number, address, hash_password, role_id, dc_id, customer_id, STATUS_USER_PENDING_ACTIVATION]);
+    
+        if (result.affectedRows === 0) {
+            return res.status(500).json({ status: false, message: 'Error to create User. Please try again later.', data:[] });
+        }
+
+        res.status(201).json({status: true, message: 'User registered successfully', data: result.insertId });
+
+    } catch (error) {
+        next(error)
     }
 }
 

@@ -12,7 +12,7 @@ class Server {
         this.authPath = '/api/auth';
         this.usersPath = '/api/users';
         this.organizationPath = '/api/organization';
-        this.countriesPath = '/api/countries';
+        this.catalogsPath = '/api/catalogs';
 
         //Middlewares
         this.middlewares();
@@ -43,7 +43,7 @@ class Server {
         // Private routes (required JWT)
         this.app.use(this.usersPath, authenticateUser, require('../routes/users'));
         this.app.use(this.organizationPath, authenticateUser, require('../routes/organization'));
-        this.app.use(this.countriesPath, authenticateUser, require('../routes/countries'));
+        this.app.use(this.catalogsPath, authenticateUser, require('../routes/catalogs'));
     }
 
     listen(){     
