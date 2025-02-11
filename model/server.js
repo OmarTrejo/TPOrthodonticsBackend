@@ -13,6 +13,7 @@ class Server {
         this.usersPath = '/api/users';
         this.organizationPath = '/api/organization';
         this.catalogsPath = '/api/catalogs';
+        this.cases = '/api/cases';
 
         //Middlewares
         this.middlewares();
@@ -44,6 +45,7 @@ class Server {
         this.app.use(this.usersPath, authenticateUser, require('../routes/users'));
         this.app.use(this.organizationPath, authenticateUser, require('../routes/organization'));
         this.app.use(this.catalogsPath, authenticateUser, require('../routes/catalogs'));
+        this.app.use(this.cases, authenticateUser, require('../routes/cases'));
     }
 
     listen(){     
