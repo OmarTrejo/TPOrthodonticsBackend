@@ -35,7 +35,7 @@ const getAll = async(req, res, next) => {
             return res.status(404).json({ status: false, message: "Country/DC's not found", data:[] });
         }
 
-        res.status(201).json({status: true, message: 'Successfully', data: rows });
+        res.status(200).json({status: true, message: 'Successfully', data: rows });
     } catch (error) {
         next(error)
     }
@@ -50,7 +50,7 @@ const getById = async(req, res, next) => {
             return res.status(404).json({ status: false, message: 'Country/DC not found', data:[] });
         }
 
-        res.status(201).json({status: true, message: 'Successfully', data: rows });
+        res.status(200).json({status: true, message: 'Successfully', data: rows });
     } catch (error) {
         next(error)
     }
@@ -67,7 +67,7 @@ const deleteOrganization = async(req, res, next) => {
         }
 
         systemLogs(user_id, "Row deleted", id, process.env.MODULE_DCS);
-        res.status(201).json({status: true, message: 'Country/DC deleted successfully', data: rows });
+        res.status(200).json({status: true, message: 'Country/DC deleted successfully', data: rows });
     } catch (error) {
         next(error)
     }
@@ -103,7 +103,7 @@ const restoreOrganization = async (req, res, next) => {
 
         systemLogs(user_id, "Row restored", id, process.env.MODULE_DCS);
 
-        res.status(201).json({status: true, message: 'Country/DC restored successfully', data: result });
+        res.status(200).json({status: true, message: 'Country/DC restored successfully', data: result });
 
     } catch (error) {
         next(error)
