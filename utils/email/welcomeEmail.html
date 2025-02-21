@@ -7,57 +7,75 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            color: #333;
+            color: #ffffff;
             margin: 0;
             padding: 0;
-            background-color: #f9f9f9;
+            background-color: #2c3e50; /* Color oscuro para el fondo */
         }
         .container {
             width: 100%;
             max-width: 600px;
             margin: 20px auto;
-            background-color: #ffffff;
+            background-color: #34495e; /* Fondo gris oscuro */
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         .header {
             text-align: center;
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 0;
-            border-radius: 8px 8px 0 0;
+            padding: 20px 0;
+            border-bottom: 2px solid #7f8c8d; /* Línea de separación */
+        }
+        .header img {
+            width: 150px; /* Ajustar el tamaño del logotipo */
+        }
+        .header h1 {
+            color: #ecf0f1; /* Color claro para el texto */
+            font-size: 24px;
+            margin-top: 10px;
         }
         .body {
             padding: 20px;
             line-height: 1.6;
+            color: #ecf0f1; /* Color claro para el texto */
+        }
+        .body p {
+            margin-bottom: 10px;
         }
         .footer {
             text-align: center;
             font-size: 12px;
-            color: #888;
-            margin-top: 20px;
+            color: #95a5a6;
+            margin-top: 30px;
         }
         a {
-            color: #4CAF50;
+            color: #1abc9c; /* Color verde para enlaces */
             text-decoration: none;
+        }
+        .footer p {
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Welcome to Our Service!</h1>
+            <!-- Coloca la ruta de tu logotipo aquí -->
+            <img src="cid:logo_image" alt="Logo">
+            <h1>TPRX</h1>
         </div>
         <div class="body">
             <p>Hello {{username}},</p>
-            <p>Thank you for joining us! We're excited to have you on board. If you have any questions, feel free to reach out to our support team.</p>
-            <p>Best regards,</p>
-            <p>The Team</p>
+            <p>Thank you for joining us! We're excited to have you on board. Here are your account details:</p>
+            <p><strong>Username:</strong> {{username}}</p>
+            <p><strong>Password:</strong> {{password}}</p>
+            <p>To get started, please visit the following link: <a href="{{base_url}}">{{base_url}}</a></p>
+            <p>If you have any questions, feel free to reach out to our support team at any time. We're here to help!</p>
         </div>
         <div class="footer">
-            <p>If you didn't sign up for this service, please ignore this email.</p>
-            <p>&copy; 2025 Our Company. All rights reserved.</p>
+            <p>Developed by: <a href="https://md360.com.mx"><strong>MD 360</strong></a></p>
+            <p>If you didn’t sign up for this service, please ignore this email.</p>
+            <p>&copy; 2025 Your Company. All rights reserved.</p>
         </div>
     </div>
 </body>

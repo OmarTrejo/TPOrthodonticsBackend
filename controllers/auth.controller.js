@@ -70,7 +70,7 @@ const createUser = async( req, res ) =>  {
 }
 
 // Static user
-const users = [{id: 2, username: "otrejo@md360.com.mx", password:"123456"}]
+const users = [{id: 1, username: "otrejo@md360.com.mx", password:"123456"}]
 
 // Login with values statics
 const loginManual = async (req, res) => {
@@ -81,7 +81,7 @@ const loginManual = async (req, res) => {
         return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET, { expiresIn: '4h' });
 
     res.json({ token });
 }

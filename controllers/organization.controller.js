@@ -1,4 +1,5 @@
 const pool = require('../database/config');
+const { MODULES } = require('../utils/constants');
 const { systemLogs } = require('../utils/systemLogs');
 
 
@@ -15,7 +16,7 @@ const addOrganization = async(req, res, next) => {
         }
 
         // Save a logs
-        systemLogs(user_id, "New row inserted", result.insertId, process.env.MODULE_DCS)
+        systemLogs(user_id, "New row inserted", result.insertId, MODULES.COUNTRIES)
 
         res.status(201).json({status: true, message: 'Country/DC registered successfully', data: result.insertId });
         
@@ -66,7 +67,7 @@ const deleteOrganization = async(req, res, next) => {
             return res.status(500).json({ status: false, message: 'Error to delete Country/DC. Please try again later.', data:[] });
         }
 
-        systemLogs(user_id, "Row deleted", id, process.env.MODULE_DCS);
+        systemLogs(user_id, "Row deleted", id, MODULES.COUNTRIES);
         res.status(200).json({status: true, message: 'Country/DC deleted successfully', data: rows });
     } catch (error) {
         next(error)
@@ -83,7 +84,7 @@ const updateOrganization = async (req, res, next) => {
             return res.status(500).json({ status: false, message: 'Error to update Country/DC. Please try again later.', data:[]  });
         }
 
-        systemLogs(user_id, "Row updated", id, process.env.MODULE_DCS);
+        systemLogs(user_id, "Row updated", id, MODULES.COUNTRIES);
 
         res.status(201).json({status: true, message: 'Country/DC updated successfully', data: result });
 
@@ -101,7 +102,7 @@ const restoreOrganization = async (req, res, next) => {
             return res.status(500).json({ status: false, message: 'Error to restore Country/DC. Please try again later.', data:[] });
         }
 
-        systemLogs(user_id, "Row restored", id, process.env.MODULE_DCS);
+        systemLogs(user_id, "Row restored", id, MODULES.COUNTRIES);
 
         res.status(200).json({status: true, message: 'Country/DC restored successfully', data: result });
 

@@ -51,7 +51,7 @@ class Server {
           this.app.use(errorHandler);
 
         this.app.listen(this.port, () => {
-            console.log('Servidor corriendo en puerto', this.port);
+            console.log(`Servidor corriendo ${process.env.BASE_URL} puerto`, this.port);
         });
     }
 
