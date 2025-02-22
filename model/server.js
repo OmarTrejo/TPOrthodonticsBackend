@@ -8,11 +8,11 @@ class Server {
     constructor() {
         this.app = express();
         this.port = process.env.PORT;
-        this.publicPath = '/public';
-        this.authPath = '/api/auth';
+        this.authPath = '/api/public/auth';
         this.usersPath = '/api/users';
         this.organizationPath = '/api/organization';
         this.catalogsPath = '/api/catalogs';
+        this.accessRequestsPath = '/api/access';
 
         //Middlewares
         this.middlewares();
@@ -44,6 +44,7 @@ class Server {
         this.app.use(this.usersPath, authenticateUser, require('../routes/users'));
         this.app.use(this.organizationPath, authenticateUser, require('../routes/organization'));
         this.app.use(this.catalogsPath, authenticateUser, require('../routes/catalogs'));
+        this.app.use(this.accessRequestsPath, authenticateUser, require('../routes/access'));
     }
 
     listen(){     

@@ -2,16 +2,20 @@ const { validationResult } = require("express-validator");
 
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
-    return res.status(400).json({
-        status: false,
-        message: "Validation failed",
-        data: errors.array().map(err => ({
-            field: err.path, // Cambia "path" a "field"
-            message: err.msg // Usa solo el mensaje
-        }))
-    });
+    const errorDetails = errors.array().map(err => err.msg); // Extrae solo los mensajes de error
+    const errorResponse = {
+      message: "Validation failed",
+      details: errorDetails, // Array de mensajes de error
+      // status: 400, // Código de estado HTTP
+      traceId: req.traceId || "", // Opcional: puedes agregar un traceId si lo tienes
+      url: req.originalUrl, // URL de la solicitud
+    };
+
+    return res.status(400).json(errorResponse);
   }
+
   next();
 };
 

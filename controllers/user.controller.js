@@ -3,7 +3,7 @@ const pool = require("../database/config.js");
 const { generateTempPassword, encryptPassword } = require('../utils/password.js');
 const { formattedDate } = require('../utils/dates.js');
 const { STATUS_USER } = require('../utils/constants.js');
-const { sendEmail } = require('../utils/email.js');
+const { sendWelcomeEmail } = require('../utils/email.js');
 
 const getUsers = async (req, res= response) => {
     try {
@@ -44,7 +44,7 @@ const addUser = async(req, res, next) => {
         }
 
         // SEND A EMAIL WITH PASSWORD 
-        sendEmail(email, username, temp_password);
+        sendWelcomeEmail(email, fullname, temp_password);
 
         res.status(201).json({status: true, message: 'User registered successfully', data: result.insertId });
 
