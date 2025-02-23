@@ -13,7 +13,13 @@ const login = async (req, res) => {
         const [rows] = await pool.query('SELECT * FROM vw_users WHERE email = ? LIMIT 1', [email]);
 
         if (rows.length === 0) {
-            return res.status(401).json({ message: 'Email not found' });
+            const error = createError(
+                "Email not found", // Mensaje de error
+                ["The email not exists"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
         }
 
         // Get user data
@@ -21,23 +27,41 @@ const login = async (req, res) => {
 
         // Validate if users is not deleted
         if (user.is_deleted) {
-            return res.status(401).json({ message: 'User not found' });
+            const error = createError(
+                "User not found", // Mensaje de error
+                ["User is deleted"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
         }
 
         // Validate if users is enabled
         if (!user.is_enabled) {
-            return res.status(401).json({ message: 'User not enabled' });
+            const error = createError(
+                "User is not enabled", // Mensaje de error
+                ["The user does´t have permissions"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
         }
 
         // Validate if user password match
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
-            return res.status(401).json({ message: 'Password incorrect' });
+            const error = createError(
+                "Password incorrect", // Mensaje de error
+                ["The password is incorrect, not match"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
         }
 
         // Create token access
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         // Consultar el role del usuario
         const [role] = await pool.query('SELECT id, role_name, status FROM role_user WHERE id = ? LIMIT 1', [user.role_id]);
@@ -49,9 +73,8 @@ const login = async (req, res) => {
         // Construir la estructura de módulos y acciones
         const modulesMap = new Map();
 
+        // Generación de map
         for (const acl of acls) {
-            console.log(acl)
-
             if (!modulesMap.has(acl.module_id)) {
                 modulesMap.set(acl.module_id, {
                     id: acl.module_id,
@@ -73,6 +96,7 @@ const login = async (req, res) => {
         const modules = Array.from(modulesMap.values());
 
         const response = {
+            token: token,
             user: {
                 id: user.id,
                 fullName: user.fullname,
@@ -100,8 +124,7 @@ const login = async (req, res) => {
                         isoCode: countrydc[0].iso
                     }
                 }
-            },
-            token: token,
+            }
         };
 
         res.status(200).json(response);

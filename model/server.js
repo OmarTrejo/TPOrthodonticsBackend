@@ -42,7 +42,7 @@ class Server {
 
         // Private routes (required JWT)
         this.app.use(this.usersPath, authenticateUser, require('../routes/users'));
-        this.app.use(this.organizationPath, require('../routes/organization'));
+        this.app.use(this.organizationPath, authenticateUser, require('../routes/organization'));
         this.app.use(this.catalogsPath, authenticateUser, require('../routes/catalogs'));
         this.app.use(this.accessRequestsPath, authenticateUser, require('../routes/access'));
     }
