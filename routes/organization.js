@@ -9,7 +9,8 @@ router.post(
     '/add', 
     [
         body("name").notEmpty().withMessage("Name is required"),
-        body("commun_name").notEmpty().withMessage("Commun name is required"),
+        body("commonName").notEmpty().withMessage("Commun name is required"),
+        body("countryId").notEmpty().withMessage("Country is required"),
         validateRequest
     ],
     addOrganization

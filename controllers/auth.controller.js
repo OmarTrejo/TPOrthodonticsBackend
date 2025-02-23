@@ -10,85 +10,106 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+        const [rows] = await pool.query('SELECT * FROM vw_users WHERE email = ? LIMIT 1', [email]);
 
         if (rows.length === 0) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Email not found' });
         }
 
+        // Get user data
         const user = rows[0];
 
+        // Validate if users is not deleted
+        if (user.is_deleted) {
+            return res.status(401).json({ message: 'User not found' });
+        }
+
+        // Validate if users is enabled
+        if (!user.is_enabled) {
+            return res.status(401).json({ message: 'User not enabled' });
+        }
+
+        // Validate if user password match
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
-            return res.status(401).json({ message: 'Credenciales inválidas' });
+            return res.status(401).json({ message: 'Password incorrect' });
         }
 
+        // Create token access
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        res.json({ token });
+        // Consultar el role del usuario
+        const [role] = await pool.query('SELECT id, role_name, status FROM role_user WHERE id = ? LIMIT 1', [user.role_id]);
+
+        const [countrydc] = await pool.query('SELECT * FROM vw_dcs WHERE id = ? LIMIT 1', [user.dc_id]);
+        // Consultar los modulos del role
+        const [acls] = await pool.query('SELECT * FROM vw_access_control_list WHERE role_id = ?', [user.role_id]);
+
+        // Construir la estructura de módulos y acciones
+        const modulesMap = new Map();
+
+        for (const acl of acls) {
+            console.log(acl)
+
+            if (!modulesMap.has(acl.module_id)) {
+                modulesMap.set(acl.module_id, {
+                    id: acl.module_id,
+                    name: acl.module,
+                    status: Boolean(acl.is_enabled),
+                    actions: []
+                });
+            }
+
+            const module = modulesMap.get(acl.module_id);
+
+            module.actions.push({
+                id: acl.action_id,
+                name: acl.action_name,
+                enabled: true // Asumimos que todas las acciones están habilitadas
+            });
+        }
+
+        const modules = Array.from(modulesMap.values());
+
+        const response = {
+            user: {
+                id: user.id,
+                fullName: user.fullname,
+                email: user.email,
+                phoneNumber: user.phone_number,
+                status: Boolean(user.is_enabled),
+                customerId: user.customer_id,
+                activedMFA: user.mfa_enabled,
+                role: {
+                    id: role[0].id,
+                    name: role[0].role_name,
+                    modules
+                },
+                country: {
+                    id: user.dc_id,
+                    name: countrydc[0].name,
+                    commonName: countrydc[0].commun_name,
+                    state: countrydc[0].state_province,
+                    city: countrydc[0].city,
+                    address: countrydc[0].address,
+                    status: Boolean(countrydc[0].status),
+                    country: {
+                        id: countrydc[0].id_country,
+                        name: countrydc[0].country,
+                        isoCode: countrydc[0].iso
+                    }
+                }
+            },
+            token: token,
+        };
+
+        res.status(200).json(response);
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
-
-const validateMFA = async (req, res) => {
-    const { userId, mfaCode } = req.body;
-
-    try {
-        const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
-
-        if (rows.length === 0) {
-            return res.status(401).json({ message: 'Usuario no encontrado' });
-        }
-
-        const user = rows[0];
-
-        const mfaMatch = await bcrypt.compare(mfaCode, user.mfa_code);
-
-        if (!mfaMatch) {
-            return res.status(401).json({ message: 'Código MFA inválido' });
-        }
-
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        res.json({ token });
-    } catch (error) {
-        console.error('Error al validar MFA:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
-    }
-
-}
-
-const createUser = async (req, res) => {
-    const { name, email, password } = req.body;
-
-    try {
-        const encryptPassword = bcrypt.hashSync(password, 10);
-        const [rows] = await pool.query('INSERT INTO users (name, username, email, password) VALUES (?, ?, ?)', [name, email, encryptPassword]);
-    } catch (error) {
-
-    }
-}
-
-// Static user
-const users = [{ id: 1, username: "otrejo@md360.com.mx", password: "12345689" }]
-
-// Login with values statics
-const loginManual = async (req, res) => {
-    const { email, password } = req.body;
-
-    const user = users.find(u => u.username === email && u.password === password);
-    if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET, { expiresIn: '4h' });
-
-    res.json({ token });
-}
-
 
 // Add new access requests to new user
 const addAccessRequests = async (req, res, next) => {
@@ -97,7 +118,7 @@ const addAccessRequests = async (req, res, next) => {
     try {
         // Validate if users exist
         const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    
+
         // Validate if users exist
         if (users.length > 0) {
             const error = createError(
@@ -139,11 +160,50 @@ const addAccessRequests = async (req, res, next) => {
         sendAccessRequestEmail(email, fullName)
 
         // * Response the application
-        return res.status(200).json({ status: true, message: 'Access Requests sent successfully.', data: [] });
+        return res.status(200).json({message: 'Access Requests sent successfully.'});
 
     } catch (error) {
         next(error)
     }
 }
 
-module.exports = { login, validateMFA, loginManual, addAccessRequests };
+const validateMFA = async (req, res) => {
+    const { userId, mfaCode } = req.body;
+
+    try {
+        const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+
+        if (rows.length === 0) {
+            return res.status(401).json({ message: 'Usuario no encontrado' });
+        }
+
+        const user = rows[0];
+
+        const mfaMatch = await bcrypt.compare(mfaCode, user.mfa_code);
+
+        if (!mfaMatch) {
+            return res.status(401).json({ message: 'Código MFA inválido' });
+        }
+
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.json({ token });
+    } catch (error) {
+        console.error('Error al validar MFA:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+
+}
+
+const createUser = async (req, res) => {
+    const { name, email, password } = req.body;
+
+    try {
+        const encryptPassword = bcrypt.hashSync(password, 10);
+        const [rows] = await pool.query('INSERT INTO users (name, username, email, password) VALUES (?, ?, ?)', [name, email, encryptPassword]);
+    } catch (error) {
+
+    }
+}
+
+module.exports = { login, addAccessRequests };

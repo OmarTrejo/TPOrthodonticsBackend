@@ -3,8 +3,6 @@ const { formattedDate } = require('../utils/dates');
 const { paginateQuery } = require('../utils/pagination');
 // const { MODULES } = require('../utils/constants');
 // const { systemLogs } = require('../utils/systemLogs');
-import * as next from 'next';
-import * as res from 'express/lib/response';
 
 // * Get all requests access
 const getRequestsAccess = async (req, res, next) => {
@@ -51,15 +49,35 @@ const getRequestsAccess = async (req, res, next) => {
 const approvedRequests = async( req, res, next) => {
     const { id } = req.params;
 
-    try {
-        // * SQL Query
-        const [rows] = await pool.query('CALL sp_approved_request_access(?)', [id]);
+    try
+    {
+        // Get user data
+        const [applicant] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
 
-        // * Response
-        res.status(200).json(rows[0][0]);
-    } catch (error) {
+        // Validate if user email exists
+        const [userExist] = await pool.query('SELECT * FROM users WHERE email = ?', [applicant[0].email]); 
+
+        if(userExist.length > 0)
+        {
+            return res.status(400).json({ status: false, message: 'Email already exists', data: [] });
+        }
+
+        
+        // Create user
+        const [user] = await pool.query('INSERT INTO users (email, password, role_id, status) VALUES (?, ?, ?, ?)', [applicant[0].email, applicant[0].password, applicant[0].role_id, 1]);
+
+        // const [result] = await pool.query('UPDATE dc SET name = ?, commun_name = ?, country_id = ?, state_province = ?, city = ?, address = ?, updated_at = NOW() WHERE id = ?', [name, commun_name, country_id, state, city, address, id])
+        // if (result.affectedRows === 0) {
+        //     return res.status(500).json({ status: false, message: 'Error to update Country/DC. Please try again later.', data:[]  });
+        // }
+
+        // systemLogs(user_id, "Row updated", id, MODULES.COUNTRIES);
+
+        // res.status(201).json({status: true, message: 'Country/DC updated successfully', data: result });
+    }catch(error)
+    {
         next(error)
     }
 }
 
-module.exports = { getRequestsAccess };
+module.exports = { getRequestsAccess, approvedRequests };
