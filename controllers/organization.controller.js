@@ -56,7 +56,7 @@ const getAll = async (req, res, next) => {
                 id: item.id,
                 name: item.name,
                 commonName: item.commun_name,
-                country,
+                country: country[0],
                 state: item.state_province,
                 city: item.city,
                 address: item.address,
