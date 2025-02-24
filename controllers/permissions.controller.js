@@ -33,7 +33,7 @@ const getAllPermissions = async (req, res, next) => {
                 module.actions.push({
                     id: acl.action_id,
                     name: acl.action_name,
-                    enabled: true // Asumimos que todas las acciones están habilitadas
+                    enabled: Boolean(acl.is_enabled) // Asumimos que todas las acciones están habilitadas
                 });
             }
 
@@ -53,6 +53,31 @@ const getAllPermissions = async (req, res, next) => {
     }
 }
 
+const updateManyPermissions = async (req, res, next) => {
+    try {
+        const permissions = req.body;
+
+        for (const permission of permissions) {
+            const { id, modules } = permission;
+            const role_id = id;
+            for (const module of modules) {
+                const { actions } = module;
+                for (const action of actions) {
+                    const { id, enabled } = action;
+                    const aclId = id;
+                    // Actualizar la tabla de permisos
+                    await pool.query('UPDATE acl SET is_enabled = ? WHERE id = ?', [enabled, aclId]);
+                }
+            }
+        }
+
+        res.status(200).json(permissions);
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
-    getAllPermissions
+    getAllPermissions,
+    updateManyPermissions
 };

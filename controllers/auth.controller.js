@@ -89,7 +89,7 @@ const login = async (req, res, next) => {
             module.actions.push({
                 id: acl.action_id,
                 name: acl.action_name,
-                enabled: true // Asumimos que todas las acciones están habilitadas
+                enabled: Boolean(acl.is_enabled) // Asumimos que todas las acciones están habilitadas
             });
         }
 
