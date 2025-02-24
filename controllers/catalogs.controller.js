@@ -1,4 +1,5 @@
 const pool = require('../database/config');
+const { paginateQuery } = require('../utils/pagination');
 
 const getCountries = async (req, res, next) => {
 
@@ -10,8 +11,8 @@ const getCountries = async (req, res, next) => {
         const validatedPageSize = parseInt(pageSize, 10) || 10;
 
         // * SQL Query base
-        const baseQuery = "SELECT * FROM vw_users";
-        const countQuery = "SELECT COUNT(*) AS total FROM vw_users";
+        const baseQuery = "SELECT * FROM countries";
+        const countQuery = "SELECT COUNT(*) AS total FROM countries";
 
         // Obtener datos paginados
         const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
@@ -20,15 +21,8 @@ const getCountries = async (req, res, next) => {
         const filteredResponse = paginatedData.results.map((item) => {
             return {
                 id: item.id,
-                fullName: item.fullname,
-                email: item.email,
-                phoneNumber: item.phone_number,
-                status: Boolean(item.is_enabled),
-                isDeleted: Boolean(item.is_deleted),
-                customerId: item.customer_id,
-                activedMFA: Boolean(item.mfa_enabled),
-                createdOn: formattedDate(item.created_at),
-                updatedOn: formattedDate(item.updated_at),
+                country: item.country,
+                iso: item.iso
             };
         });
 
@@ -41,13 +35,6 @@ const getCountries = async (req, res, next) => {
         res.status(200).json(response);
     } catch (error) {
         next(error)
-    }
-
-    try {
-        const [rows] = await pool.query('SELECT id, country, iso FROM countries WHERE status = 1');
-        res.status(200).json({status: true, message: 'Successfully', data: rows });
-    } catch (error) {
-        next(error);
     }
 }
 
