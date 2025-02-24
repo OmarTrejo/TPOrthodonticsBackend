@@ -23,8 +23,16 @@ const TABLE_MAPPING = {
     [MODULES.CASES]: 'cases'
 };
 
+const ROLES_USER = {
+    ADMIN: 5,
+    TECH: 6,
+    DOCTOR: 7,
+    SUPPORT: 8
+}
+
 module.exports = {
     MODULES,
     STATUS_USER,
-    TABLE_MAPPING
+    TABLE_MAPPING,
+    ROLES_USER
 }

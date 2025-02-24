@@ -97,7 +97,7 @@ const sendAccessRequestEmail = async (to, fullname) => {
 // Send email to wait authorization
 const sendAccessRequestDenyEmail = async (to, fullname) => {
     // Leer el archivo HTML
-    const htmlContent = fs.readFileSync(path.join(__dirname, './email/accessRequestEmail.html'), 'utf8');
+    const htmlContent = fs.readFileSync(path.join(__dirname, './email/denyAccessRequests.html'), 'utf8');
 
     // Crear un objeto con los valores que deseas reemplazar
     const replacements = {
@@ -130,7 +130,44 @@ const sendAccessRequestDenyEmail = async (to, fullname) => {
     }
 };
 
+// SEND Welcome email
+const sendAccessRequestApprovedEmail = async (to, fullname) => {
+    
 
+    // Leer el archivo HTML
+    const htmlContent = fs.readFileSync(path.join(__dirname, './email/approvedAccessRequests.html'), 'utf8');
+
+    // Crear un objeto con los valores que deseas reemplazar
+    const replacements = {
+        fullname,
+        BASE_URL
+    };
+
+    // Reemplazar todas las variables en el HTML
+    const personalizedHtml = replacePlaceholders(htmlContent, replacements);
+
+    const msg = {
+        to,
+        from: process.env.SENDGRID_EMAIL,
+        subject: "Your Access Request Has Been Approved",
+        html: personalizedHtml,
+        attachments: [
+            {
+                filename: 'logo.png',
+                content: fs.readFileSync('./utils/email/logo.png').toString('base64'),
+                type: 'image/png',
+                disposition: 'inline',
+                content_id: 'logo_image'
+            }
+        ]
+    };
+
+    try {
+        await sgMail.send(msg);
+    } catch (error) {
+        logger.error('Error to update logs, Please try again later.');
+    }
+};
 
 module.exports = {
     sendWelcomeEmail,

@@ -1,9 +1,10 @@
 const pool = require('../database/config');
-const { MODULES } = require('../utils/constants');
+const { MODULES, ROLES_USER, STATUS_USER } = require('../utils/constants');
 const { formattedDate } = require('../utils/dates');
 const { sendAccessRequestDenyEmail } = require('../utils/email');
 const { paginateQuery } = require('../utils/pagination');
 const { systemLogs } = require('../utils/systemLogs');
+const createError = require('../utils/createError');
 // const { MODULES } = require('../utils/constants');
 // const { systemLogs } = require('../utils/systemLogs');
 
@@ -51,32 +52,41 @@ const getRequestsAccess = async (req, res, next) => {
 // * Approved the requests access
 const approvedRequests = async( req, res, next) => {
     const { id } = req.params;
+    const user_id = req.user.id;
 
     try
     {
         // Get user data
-        const [applicant] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+        const [applicant] = await pool.query('SELECT * FROM request_user WHERE id = ? LIMIT 1', [id]);
+        // Get new user data
+        const new_user = applicant[0];
 
         // Validate if user email exists
-        const [userExist] = await pool.query('SELECT * FROM users WHERE email = ?', [applicant[0].email]); 
+        const [userExist] = await pool.query('SELECT * FROM users WHERE email = ?', [new_user.email]); 
 
         if(userExist.length > 0)
         {
-            return res.status(400).json({ status: false, message: 'Email already exists', data: [] });
+            const error = createError(
+                "User and email already exists", // Mensaje de error
+                ["The email is used for another user of system"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
         }
-
+        
+        const username = new_user.email.split('@')[0];
         
         // Create user
-        const [user] = await pool.query('INSERT INTO users (email, password, role_id, status) VALUES (?, ?, ?, ?)', [applicant[0].email, applicant[0].password, applicant[0].role_id, 1]);
+        const [user] = await pool.query('INSERT INTO users (username, email, password, fullname, role_id, status_id) VALUES (?, ?, ?, ?, ?, ?)', [username, new_user.email, new_user.password, new_user.fullname, ROLES_USER.DOCTOR, STATUS_USER.ACTIVE]);
 
-        // const [result] = await pool.query('UPDATE dc SET name = ?, commun_name = ?, country_id = ?, state_province = ?, city = ?, address = ?, updated_at = NOW() WHERE id = ?', [name, commun_name, country_id, state, city, address, id])
-        // if (result.affectedRows === 0) {
-        //     return res.status(500).json({ status: false, message: 'Error to update Country/DC. Please try again later.', data:[]  });
-        // }
+        // Save logs
+        systemLogs(user_id, "Requests access has been approved", user.insertId, MODULES.REQUESTS);
+        
+        // * Update your requests
+        await pool.query('UPDATE request_user SET status = 0 WHERE id = ?', [id]);
 
-        // systemLogs(user_id, "Row updated", id, MODULES.COUNTRIES);
-
-        // res.status(201).json({status: true, message: 'Country/DC updated successfully', data: result });
+        res.status(201).json({message: 'Request access has been approved succesfully'});
     }catch(error)
     {
         next(error)
