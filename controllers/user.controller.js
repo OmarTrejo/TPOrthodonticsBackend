@@ -143,11 +143,13 @@ const getUserById = async (req, res, next) => {
 // * @param  
 const updateUser = async (req, res, next) => {
     const { id } = req.params;
-    const { fullName, email, phoneNumber, roleId, organizationId, customerId = '' } = req.body;
+    const { fullName, email, phoneNumber, roleId, organizationId, customerId = '', status } = req.body;
     const user_id = req.user.id;
 
+    const new_status = status === true ? STATUS_USER.ACTIVE : STATUS_USER.INACTIVE;
+
     try {
-        const [rows] = await pool.query('UPDATE users SET fullname = ?, phone_number = ?, customer_id = ?, email = ?, role_id = ?, dc_id = ? WHERE id = ?', [fullName, phoneNumber, customerId, email, roleId, organizationId, id]);
+        const [rows] = await pool.query('UPDATE users SET fullname = ?, phone_number = ?, customer_id = ?, email = ?, role_id = ?, dc_id = ?, status_id = ? WHERE id = ?', [fullName, phoneNumber, customerId, email, roleId, organizationId, new_status, id]);
 
         if (rows.affectedRows === 0) {
             const error = createError(
