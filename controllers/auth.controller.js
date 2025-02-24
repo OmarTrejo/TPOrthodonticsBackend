@@ -110,7 +110,7 @@ const login = async (req, res, next) => {
                     name: role[0].role_name,
                     modules
                 },
-                country: {
+                organization: {
                     id: user.dc_id,
                     name: countrydc[0].name,
                     commonName: countrydc[0].commun_name,
