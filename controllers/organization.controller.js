@@ -176,10 +176,10 @@ const updateStatusOrganization = async (req, res, next) => {
 
 const updateOrganization = async (req, res, next) => {
     const { id } = req.params;
-    const { name, commun_name, country_id, state, city, address } = req.body;
+    const { name, commonName, countryId, state, city, address } = req.body;
     const user_id = req.user.id;
     try {
-        const [result] = await pool.query('UPDATE dc SET name = ?, commun_name = ?, country_id = ?, state_province = ?, city = ?, address = ?, updated_at = NOW() WHERE id = ?', [name, commun_name, country_id, state, city, address, id])
+        const [result] = await pool.query('UPDATE dc SET name = ?, commun_name = ?, country_id = ?, state_province = ?, city = ?, address = ?, updated_at = NOW() WHERE id = ?', [name, commonName, countryId, state, city, address, id])
         if (result.affectedRows === 0) {
             const error = createError(
                 "Error to update Country, please try again later", // Mensaje de error

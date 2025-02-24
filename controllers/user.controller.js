@@ -9,7 +9,7 @@ const { systemLogs } = require('../utils/systemLogs.js');
 
 // * Add new user
 const addUser = async (req, res, next) => {
-    const { fullName, email, phoneNumber, address, role_id, organizationId, customer_id = '' } = req.body;
+    const { fullName, email, phoneNumber, roleId, organizationId, customerId = '' } = req.body;
     const user_id = req.user.id;
 
     try {
@@ -23,7 +23,7 @@ const addUser = async (req, res, next) => {
         const hash_password = encryptPassword(temp_password);
 
         // INSERT INTO DB
-        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, address, password, role_id, dc_id, customer_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [username, fullName, email, phoneNumber, address, hash_password, role_id, organizationId, customer_id, STATUS_USER.PENDING_ACTIVATION]);
+        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, password, role_id, dc_id, customer_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [username, fullName, email, phoneNumber, hash_password, roleId, organizationId, customerId, STATUS_USER.PENDING_ACTIVATION]);
 
         // VALIDATE THAT THE USER WAS CREATED
         if (result.affectedRows === 0) {
@@ -52,7 +52,7 @@ const addUser = async (req, res, next) => {
 // * Get all users
 const getUsers = async (req, res, next) => {
     const { page, pageSize, ...filters } = req.query;
-
+    const user_id = req.user.id;
     try {
         // * Conversión y validación
         const validatedPage = parseInt(page, 10) || 1;
@@ -143,11 +143,11 @@ const getUserById = async (req, res, next) => {
 // * @param  
 const updateUser = async (req, res, next) => {
     const { id } = req.params;
-    const { fullName, phoneNumber, address, customer_id = '' } = req.body;
+    const { fullName, email, phoneNumber, roleId, organizationId, customerId = '' } = req.body;
     const user_id = req.user.id;
 
     try {
-        const [rows] = await pool.query('UPDATE users SET fullname = ?, phone_number = ?, address = ?, customer_id = ? WHERE id = ?', [fullName, phoneNumber, address, customer_id, id]);
+        const [rows] = await pool.query('UPDATE users SET fullname = ?, phone_number = ?, customer_id = ?, email = ?, role_id = ?, dc_id = ? WHERE id = ?', [fullName, phoneNumber, customerId, email, roleId, organizationId, id]);
 
         if (rows.affectedRows === 0) {
             const error = createError(
