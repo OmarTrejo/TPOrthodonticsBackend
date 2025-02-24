@@ -6,6 +6,7 @@ const { STATUS_USER, MODULES, TABLE_MAPPING } = require('../utils/constants.js')
 const { sendWelcomeEmail } = require('../utils/email.js');
 const { paginateQuery } = require('../utils/pagination');
 const { systemLogs } = require('../utils/systemLogs.js');
+const createError = require('../utils/createError');
 
 // * Add new user
 const addUser = async (req, res, next) => {
