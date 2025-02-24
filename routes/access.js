@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { body, param } = require('express-validator');
 const validateRequest = require('../middleware/validateRequest');
 
-const { getRequestsAccess, approvedRequests } = require('../controllers/access.controller');
+const { getRequestsAccess, approvedRequests, denyAccess } = require('../controllers/access.controller');
 
 const router = Router();
 
@@ -14,5 +14,14 @@ router.post('/ApprovedRequest/:id', [
     param('id', 'El id debe ser un número').isNumeric(),
     validateRequest
 ], approvedRequests);
+/**
+ * @TODO Deny access to platform
+ * Send email to user with a link to create a new password
+ */
+router.delete('/deny/:id', [
+    param('id', 'El id es obligatorio').not().isEmpty(),
+    param('id', 'El id debe ser un número').isNumeric(),
+    validateRequest
+], denyAccess);
 
 module.exports = router;

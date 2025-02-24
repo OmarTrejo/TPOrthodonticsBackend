@@ -1,6 +1,9 @@
 const pool = require('../database/config');
+const { MODULES } = require('../utils/constants');
 const { formattedDate } = require('../utils/dates');
+const { sendAccessRequestDenyEmail } = require('../utils/email');
 const { paginateQuery } = require('../utils/pagination');
+const { systemLogs } = require('../utils/systemLogs');
 // const { MODULES } = require('../utils/constants');
 // const { systemLogs } = require('../utils/systemLogs');
 
@@ -80,4 +83,30 @@ const approvedRequests = async( req, res, next) => {
     }
 }
 
-module.exports = { getRequestsAccess, approvedRequests };
+/**
+ * TODO Deny access to platform
+ * Send email to user with a link to create a new password
+ */
+const denyAccess = async(req, res, next) => {
+    const { id } = req.params;
+    const user_id = req.user.id;
+
+    try
+    {
+        // * Get data from user
+        const [ applicant ] = await pool.query('SELECT * FROM request_user WHERE id = ?', [id]);
+        // * Update your requests
+        await pool.query('UPDATE request_user SET status = 0 WHERE id = ?', [id]);
+        // * Se elimina la solicitud, y envía un correo que fue denegado su acceso
+        sendAccessRequestDenyEmail(applicant[0].email, applicant[0].fullname);
+
+        systemLogs(user_id, "Request Access has been denied", id, MODULES.REQUESTS);
+
+        res.status(204).json();
+    }catch(error)
+    {
+        next(error)
+    }
+}
+
+module.exports = { getRequestsAccess, approvedRequests, denyAccess };
