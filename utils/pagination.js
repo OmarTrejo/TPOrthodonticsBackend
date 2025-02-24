@@ -41,8 +41,6 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize) => 
             }
         }
 
-        console.log(whereClause);
-
         // Obtener los datos paginados
         const [rows] = await pool.query(
             `${baseQuery}${whereClause} LIMIT ? OFFSET ?`,
