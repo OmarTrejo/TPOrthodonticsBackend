@@ -56,7 +56,11 @@ const getAll = async (req, res, next) => {
                 id: item.id,
                 name: item.name,
                 commonName: item.commun_name,
-                country: country[0],
+                country: {
+                    id: country[0].id,
+                    name: country[0].country,
+                    iso: country[0].iso,
+                },
                 state: item.state_province,
                 city: item.city,
                 address: item.address,

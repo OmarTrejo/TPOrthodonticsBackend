@@ -21,7 +21,7 @@ const getCountries = async (req, res, next) => {
         const filteredResponse = paginatedData.results.map((item) => {
             return {
                 id: item.id,
-                country: item.country,
+                name: item.country,
                 iso: item.iso
             };
         });
