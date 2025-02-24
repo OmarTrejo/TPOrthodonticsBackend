@@ -16,20 +16,25 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize) => 
         if (filters && Object.keys(filters).length > 0) {
             const filterConditions = Object.keys(filters).map((key) => {
                 if (key === 'is_deleted') {
-                    // Si el filtro es "is_deleted", usar el operador =
                     filterValues.push(filters[key]);
                     return `${key} = ?`;
                 } else {
-                    // Para otros filtros, usar LIKE con comodines %
                     filterValues.push(`%${filters[key]}%`);
                     return `${key} LIKE ?`;
                 }
             });
 
-            // Construir la cláusula WHERE
             if (filters.hasOwnProperty('is_deleted')) {
-                // Si existe el filtro is_deleted, agregarlo al inicio
-                whereClause = ` WHERE is_deleted = ? AND (${filterConditions.filter(cond => !cond.startsWith('is_deleted')).join(' OR ')})`;
+                // Si existe el filtro is_deleted
+                const otherConditions = filterConditions.filter(cond => !cond.startsWith('is_deleted'));
+
+                if (otherConditions.length > 0) {
+                    // Si hay otros filtros, agregar el paréntesis
+                    whereClause = ` WHERE is_deleted = ? AND (${otherConditions.join(' OR ')})`;
+                } else {
+                    // Si no hay otros filtros, solo usar is_deleted
+                    whereClause = ` WHERE is_deleted = ?`;
+                }
             } else {
                 // Si no existe el filtro is_deleted, solo usar los demás filtros
                 whereClause = ` WHERE ${filterConditions.join(' OR ')}`;
