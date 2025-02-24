@@ -77,6 +77,7 @@ const getUsers = async (req, res, next) => {
                 email: item.email,
                 phoneNumber: item.phone_number,
                 status: Boolean(item.is_enabled),
+                statusName: item.status,
                 isDeleted: Boolean(item.is_deleted),
                 customerId: item.customer_id,
                 activedMFA: Boolean(item.mfa_enabled),
