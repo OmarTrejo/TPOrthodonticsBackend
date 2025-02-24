@@ -180,6 +180,19 @@ const updateStatus = async (req, res, next) => {
     const new_status = status === true ? STATUS_USER.ACTIVE : STATUS_USER.INACTIVE;
 
     try {
+
+        const [ current_user ] = await pool.query('SELECT * FROM users WHERE id = ?', [id])
+
+        if (current_user[0].status_id === STATUS_USER.PENDING_ACTIVATION) {
+            const error = createError(
+                "Error to change status of User, user have pending activation", // Mensaje de error
+                ["Error into database"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
         const [rows] = await pool.query('UPDATE users SET status_id = ? WHERE id = ?', [new_status, id]);
 
         if (rows.affectedRows === 0) {
