@@ -218,15 +218,5 @@ const validateMFA = async (req, res) => {
 
 }
 
-const createUser = async (req, res) => {
-    const { name, email, password } = req.body;
-
-    try {
-        const encryptPassword = bcrypt.hashSync(password, 10);
-        const [rows] = await pool.query('INSERT INTO users (name, username, email, password) VALUES (?, ?, ?)', [name, email, encryptPassword]);
-    } catch (error) {
-
-    }
-}
 
 module.exports = { login, addAccessRequests };

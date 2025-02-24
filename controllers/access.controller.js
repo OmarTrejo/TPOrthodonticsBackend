@@ -7,7 +7,7 @@ const { paginateQuery } = require('../utils/pagination');
 // * Get all requests access
 const getRequestsAccess = async (req, res, next) => {
 
-    const { page, pageSize } = req.query;
+    const { page, pageSize, ...filters } = req.query;
 
     try {
         // Conversión y validación
@@ -19,7 +19,7 @@ const getRequestsAccess = async (req, res, next) => {
         const countQuery = "SELECT COUNT(*) AS total FROM vw_requests_access";
 
         // Obtener datos paginados
-        const paginatedData = await paginateQuery(baseQuery, countQuery, [], validatedPage, validatedPageSize);
+        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
 
         // Formatear los resultados
         const filteredResponse = paginatedData.results.map((item) => {
