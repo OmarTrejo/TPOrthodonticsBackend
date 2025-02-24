@@ -11,12 +11,20 @@ const MODULES = {
 }
 
 const STATUS_USER = {
-    ACTIVE: 1,
-    INACTIVE: 2,
-    PENDING_ACTIVATION: 10
+    ACTIVE: 6,
+    INACTIVE: 7,
+    PENDING_ACTIVATION: 10,
+    DELETED: 9
 }
+
+const TABLE_MAPPING = {
+    [MODULES.USERS]: 'users',
+    [MODULES.COUNTRIES]: 'dc',
+    [MODULES.CASES]: 'cases'
+};
 
 module.exports = {
     MODULES,
-    STATUS_USER
+    STATUS_USER,
+    TABLE_MAPPING
 }

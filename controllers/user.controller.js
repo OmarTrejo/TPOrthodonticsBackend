@@ -1,29 +1,16 @@
-const {response} = require('express');
+const { response } = require('express');
 const pool = require("../database/config.js");
 const { generateTempPassword, encryptPassword } = require('../utils/password.js');
 const { formattedDate } = require('../utils/dates.js');
-const { STATUS_USER } = require('../utils/constants.js');
+const { STATUS_USER, MODULES, TABLE_MAPPING } = require('../utils/constants.js');
 const { sendWelcomeEmail } = require('../utils/email.js');
+const { paginateQuery } = require('../utils/pagination');
+const { systemLogs } = require('../utils/systemLogs.js');
 
-const getUsers = async (req, res= response) => {
-    try {
-        const [users] = await pool.query('SELECT * FROM users');
-        if(!users) return res.status(404).json({msg: 'No se encontraron usuarios'});
-
-        const formattedUsers = users.map(user => ({
-            ...user,
-            created_at: formattedDate(user.created_at),
-            updated_at: formattedDate(user.updated_at)
-        }));
-
-        res.status(200).json({msg:'Ok', data:formattedUsers});
-    } catch (error) {
-        res.status(500).json({msg: error.message});
-    }
-}
-
-const addUser = async(req, res, next) => {
-    const { fullname, email, phone_number, address, role_id, dc_id, customer_id = '' } = req.body;
+// * Add new user
+const addUser = async (req, res, next) => {
+    const { fullName, email, phoneNumber, address, role_id, dc_id, customer_id = '' } = req.body;
+    const user_id = req.user.id;
 
     try {
         // Create a username with email
@@ -36,26 +23,314 @@ const addUser = async(req, res, next) => {
         const hash_password = encryptPassword(temp_password);
 
         // INSERT INTO DB
-        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, address, password, role_id, dc_id, customer_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [username, fullname, email, phone_number, address, hash_password, role_id, dc_id, customer_id, STATUS_USER.PENDING_ACTIVATION]);
-    
+        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, address, password, role_id, dc_id, customer_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [username, fullName, email, phoneNumber, address, hash_password, role_id, dc_id, customer_id, STATUS_USER.PENDING_ACTIVATION]);
+
         // VALIDATE THAT THE USER WAS CREATED
         if (result.affectedRows === 0) {
-            return res.status(500).json({ status: false, message: 'Error to create User. Please try again later.', data:[] });
+            const error = createError(
+                "Error to create user, please try again later", // Mensaje de error
+                ["Error to register"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
         }
+
+        // Save a logs
+        systemLogs(user_id, "New row inserted", result.insertId, MODULES.USERS)
 
         // SEND A EMAIL WITH PASSWORD 
         sendWelcomeEmail(email, fullname, temp_password);
 
-        res.status(201).json({status: true, message: 'User registered successfully', data: result.insertId });
+        res.status(201).json({ message: 'User registered successfully' });
 
     } catch (error) {
         next(error)
     }
 }
 
+// * Get all users
+const getUsers = async (req, res, next) => {
+    const { page, pageSize, ...filters } = req.query;
 
+    try {
+        // * Conversión y validación
+        const validatedPage = parseInt(page, 10) || 1;
+        const validatedPageSize = parseInt(pageSize, 10) || 10;
+
+        // * SQL Query base
+        const baseQuery = "SELECT * FROM vw_users";
+        const countQuery = "SELECT COUNT(*) AS total FROM vw_users";
+
+        // Obtener datos paginados
+        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
+
+        // Formatear los resultados
+        const filteredResponse = paginatedData.results.map((item) => {
+            return {
+                id: item.id,
+                fullName: item.fullname,
+                email: item.email,
+                phoneNumber: item.phone_number,
+                status: Boolean(item.is_enabled),
+                isDeleted: Boolean(item.is_deleted),
+                customerId: item.customer_id,
+                activedMFA: Boolean(item.mfa_enabled),
+                createdOn: formattedDate(item.created_at),
+                updatedOn: formattedDate(item.updated_at),
+            };
+        });
+
+        // Construir la respuesta
+        const response = {
+            ...paginatedData,
+            results: filteredResponse,
+        };
+
+        res.status(200).json(response);
+    } catch (error) {
+        next(error)
+    }
+}
+
+// * Get user by Id
+const getUserById = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.query('SELECT * FROM vw_users WHERE id = ?', [id]);
+
+        if (rows.length === 0) {
+            const error = createError(
+                "User not found", // Mensaje de error
+                ["Id incorrect"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        const response = {
+            id: rows[0].id,
+            fullName: rows[0].fullname,
+            email: rows[0].email,
+            phoneNumber: rows[0].phone_number,
+            status: Boolean(rows[0].is_enabled),
+            isDeleted: Boolean(rows[0].is_deleted),
+            customerId: rows[0].customer_id,
+            activedMFA: Boolean(rows[0].mfa_enabled),
+            createdOn: formattedDate(rows[0].created_at),
+            updatedOn: formattedDate(rows[0].updated_at),
+        };
+
+        res.status(200).json(response);
+    } catch (error) {
+        next(error)
+    }
+}
+
+// * Update users
+// * @param  
+const updateUser = async (req, res, next) => {
+    const { id } = req.params;
+    const { fullName, phoneNumber, address, customer_id = '' } = req.body;
+    const user_id = req.user.id;
+
+    try {
+        const [rows] = await pool.query('UPDATE users SET fullname = ?, phone_number = ?, address = ?, customer_id = ? WHERE id = ?', [fullName, phoneNumber, address, customer_id, id]);
+
+        if (rows.affectedRows === 0) {
+            const error = createError(
+                "Error to change status of User, please try again later", // Mensaje de error
+                ["Error into database"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Logs inserts
+        systemLogs(user_id, "Row updated status", id, MODULES.USERS);
+        res.status(200).json({ message: 'User changed status successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+// * Update users
+// * @param  
+const updateStatus = async (req, res, next) => {
+    const { id } = req.params;
+    const user_id = req.user.id;
+    const { status } = req.body;
+
+    const new_status = status === true ? STATUS_USER.ACTIVE : STATUS_USER.INACTIVE;
+
+    try {
+        const [rows] = await pool.query('UPDATE users SET status_id = ? WHERE id = ?', [new_status, id]);
+
+        if (rows.affectedRows === 0) {
+            const error = createError(
+                "Error to change status of User, please try again later", // Mensaje de error
+                ["Error into database"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Logs inserts
+        systemLogs(user_id, "Row status updated status", id, MODULES.USERS);
+        res.status(200).json({ message: 'User changed status successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+// * Update users
+// * @param  
+const deleteUser = async (req, res, next) => {
+    const { id } = req.params;
+    const user_id = req.user.id;
+
+    try {
+        const [rows] = await pool.query('UPDATE users SET is_deleted = 1, status_id = ? WHERE id = ?', [STATUS_USER.DELETED, id]);
+
+        if (rows.affectedRows === 0) {
+            const error = createError(
+                "Error to change status of User, please try again later", // Mensaje de error
+                ["Error into database"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Logs inserts
+        systemLogs(user_id, "Row status deleted status", id, MODULES.USERS);
+        res.status(204).json({ message: 'User changed status successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+const getLogs = async (req, res, next) => {
+    const { page, pageSize, ...filters } = req.query;
+
+    try {
+        // * Conversión y validación
+        const validatedPage = parseInt(page, 10) || 1;
+        const validatedPageSize = parseInt(pageSize, 10) || 10;
+    
+        // * SQL Query base
+        const baseQuery = "SELECT * FROM vw_logs";
+        const countQuery = "SELECT COUNT(*) AS total FROM vw_logs";
+    
+        // Obtener datos paginados
+        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
+    
+        // Formatear los resultados y obtener registros adicionales por módulo
+        const filteredResponse = await Promise.all(
+            paginatedData.results.map(async (item) => {
+                try {
+                    // Obtener el registro adicional según el módulo
+                    const record = await getRecordByModule(item);
+                    const module = await getModule(item.module_id);
+                    const systemUser = await getUser(item.user_id);
+
+                    return {
+                        id: item.id,
+                        createdOn: formattedDate(item.created_at),
+                        record: record, // Incluir el registro obtenido
+                        module,
+                        action: item.action, // Incluir el registro obtenido,
+                        systemUser
+                        
+                    };
+                } catch (error) {
+                    console.error(`Error procesando el item con id ${item.id}:`, error);
+                    return {
+                        id: item.id,
+                        error: true, // Indicar que hubo un error
+                        message: error.message, // Opcional: incluir el mensaje de error
+                    };
+                }
+            })
+        );
+    
+        // Construir la respuesta
+        const response = {
+            ...paginatedData,
+            results: filteredResponse,
+        };
+    
+        res.status(200).json(response);
+    }
+    catch(error)
+    {
+        next(error)
+    }
+}
+
+async function getRecordByModule(item) {
+
+    const table = TABLE_MAPPING[item.module_id];
+
+    if (!table) {
+        throw new Error(`Módulo no válido: ${item.module_id}`);
+    }
+
+    try {
+        const [record] = await pool.query(`SELECT * FROM ${table} WHERE id = ? LIMIT 1`, [item.modified_id]);
+        
+        const response = {
+            id: record[0].id,
+            name: record[0].name != null ? record[0].name : record[0].fullname,
+        };
+
+        return response;
+    } catch (error) {
+        console.error(`Error al obtener el registro del módulo ${item.module_id}, ${item.modified_id}: `, error);
+        throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
+    }
+}
+
+async function getModule(module_id) {
+    try {
+        const [module] = await pool.query(`SELECT * FROM module WHERE id = ? LIMIT 1`, [module_id]);
+
+        const response = {
+            id: module[0].id,
+            name: module[0].module,
+        };
+
+        return response;
+    } catch (error) {
+        console.error(`Error al obtener el registro del módulo ${module_id}: `, error);
+        throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
+    }
+}
+async function getUser(user_id) {
+    try {
+        const [module] = await pool.query(`SELECT * FROM users WHERE id = ? LIMIT 1`, [user_id]);
+
+        const response = {
+            id: module[0].id,
+            fullName: module[0].fullname,
+        };
+
+        return response;
+    } catch (error) {
+        console.error(`Error al obtener el registro del módulo ${user_id}: `, error);
+        throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
+    }
+}
 
 module.exports = {
     getUsers,
-    addUser
+    addUser,
+    getUserById,
+    updateUser,
+    updateStatus,
+    deleteUser,
+    getLogs
 }

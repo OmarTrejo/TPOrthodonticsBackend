@@ -17,9 +17,9 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize) => 
         if (filters && Object.keys(filters).length > 0) {
             const filterConditions = Object.keys(filters).map((key) => {
                 filterValues.push(filters[key]);
-                return `${key} = ?`;
+                return `${key} LIKE ?`;
             });
-            whereClause = ` WHERE ${filterConditions.join(' AND ')}`;
+            whereClause = ` WHERE ${filterConditions.join(' OR ')}`;
         }
 
         // Obtener los datos paginados

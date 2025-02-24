@@ -1,4 +1,6 @@
 const errorHandler = (err, req, res, next) => {
+  console.error(err);
+
   // Estructura base del error
   const errorResponse = {
     message: "", // Mensaje de error

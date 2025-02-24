@@ -48,18 +48,22 @@ const getAll = async (req, res, next) => {
         const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
 
         // Formatear los resultados
-        const filteredResponse = paginatedData.results.map((item) => {
+        const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
+
+            const [country] = await pool.query('SELECT country, iso, status FROM countries WHERE id = ? LIMIT 1', [item.id_country]);
+
             return {
                 id: item.id,
                 name: item.name,
                 commonName: item.commun_name,
-                country: item.country,
+                country,
                 state: item.state_province,
                 city: item.city,
                 address: item.address,
                 status: Boolean(item.status)
             };
-        });
+        })
+    );
 
         // Construir la respuesta
         const response = {
@@ -76,7 +80,7 @@ const getAll = async (req, res, next) => {
 const getById = async (req, res, next) => {
     const { id } = req.params;
     try {
-        const [rows] = await pool.query('SELECT id, name, commun_name, country_id, state_province, city, address FROM dc WHERE id = ?', [id]);
+        const [rows] = await pool.query('SELECT id, name, commun_name, country_id, state_province, city, address, status FROM dc WHERE id = ?', [id]);
 
         if (rows.length === 0) {
             const error = createError(
@@ -88,7 +92,7 @@ const getById = async (req, res, next) => {
             return next(error); // Pasa el error al middleware de manejo de errores
         }
 
-        const [country] = await pool.query('SELECT country, iso, status FROM countries WHERE id = ?', [rows[0].country_id]);
+        const [country] = await pool.query('SELECT country, iso, status FROM countries WHERE id = ? LIMIT 1', [rows[0].country_id]);
 
         // *Filtered response
         const response = {
