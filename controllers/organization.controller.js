@@ -3,6 +3,7 @@ const { MODULES } = require('../utils/constants');
 const { systemLogs } = require('../utils/systemLogs');
 const { paginateQuery } = require('../utils/pagination');
 const createError = require('../utils/createError');
+const { recyclerBin } = require('../utils/recyclerbin');
 
 
 const addOrganization = async (req, res, next) => {
@@ -140,6 +141,9 @@ const deleteOrganization = async (req, res, next) => {
 
         // Logs inserts
         systemLogs(user_id, "Row deleted", id, MODULES.COUNTRIES);
+        // Create a record
+        recyclerBin(id, MODULES.COUNTRIES, user_id);
+
         res.status(204).json({ message: 'Country/DC deleted successfully' });
     } catch (error) {
         next(error)

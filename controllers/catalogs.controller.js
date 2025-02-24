@@ -42,7 +42,7 @@ const getTypeCase = async (req, res, next) => {
             return {
                 id: item.id,
                 name: item.type_name,
-                isPDFFile: item.is_pdf_file,
+                isPDFFile: Boolean(item.is_pdf_file),
                 urlPDF: item.url_pdf
             };
         })

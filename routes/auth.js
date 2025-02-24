@@ -2,17 +2,10 @@ const { Router } = require('express');
 const { body } = require('express-validator');
 const validateRequest = require('../middleware/validateRequest');
 
-const { login, loginManual, addAccessRequests } = require('../controllers/auth.controller');
-const { getAll } = require('../controllers/organization.controller');
+const { login, addAccessRequests } = require('../controllers/auth.controller');
 
 const router = Router();
 
-// * Public login access to web app
-// router.post('/login', [
-//     body("email").notEmpty().withMessage("Email is required"),
-//     body("password").isLength({min:8}).withMessage("Password must be at least 8 characters long"),
-//     validateRequest
-// ], loginManual);
 // * Login good
 router.post('/login', [
     body("email").notEmpty().withMessage("Email is required"),
@@ -27,7 +20,4 @@ router.post('/addAccessRequests', [
     body("password").isLength({min:8}).withMessage("Password must be at least 8 characters long"),
     validateRequest
 ], addAccessRequests);
-
-router.get('/getAllCountriesDC', getAll)
-
 module.exports = router;

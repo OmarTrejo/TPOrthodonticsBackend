@@ -13,6 +13,7 @@ class Server {
         this.organizationPath = '/api/organization';
         this.catalogsPath = '/api/catalogs';
         this.accessRequestsPath = '/api/access';
+        this.recycleBinPath = '/api/recyclebin';
 
         //Middlewares
         this.middlewares();
@@ -45,6 +46,7 @@ class Server {
         this.app.use(this.organizationPath, authenticateUser, require('../routes/organization'));
         this.app.use(this.catalogsPath, authenticateUser, require('../routes/catalogs'));
         this.app.use(this.accessRequestsPath, authenticateUser, require('../routes/access'));
+        this.app.use(this.recycleBinPath, authenticateUser, require('../routes/recyclebin'));
     }
 
     listen(){     

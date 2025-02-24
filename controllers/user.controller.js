@@ -7,6 +7,7 @@ const { sendWelcomeEmail } = require('../utils/email.js');
 const { paginateQuery } = require('../utils/pagination');
 const { systemLogs } = require('../utils/systemLogs.js');
 const createError = require('../utils/createError');
+const { recyclerBin } = require('../utils/recyclerbin.js');
 
 // * Add new user
 const addUser = async (req, res, next) => {
@@ -235,6 +236,9 @@ const deleteUser = async (req, res, next) => {
 
         // Logs inserts
         systemLogs(user_id, "Row status deleted status", id, MODULES.USERS);
+        // ! CREATE A RECYCLER
+        recyclerBin(id, MODULES.USERS, user_id);
+
         res.status(204).json({ message: 'User changed status successfully' });
     } catch (error) {
         next(error);
