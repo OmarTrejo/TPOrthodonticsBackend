@@ -66,7 +66,12 @@ const getUsers = async (req, res, next) => {
         const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
 
         // Formatear los resultados
-        const filteredResponse = paginatedData.results.map((item) => {
+        const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
+
+            const role = await getRole(item.role_id);
+            const country = await getRole(item.coun);
+
+
             return {
                 id: item.id,
                 fullName: item.fullname,
@@ -79,7 +84,8 @@ const getUsers = async (req, res, next) => {
                 createdOn: formattedDate(item.created_at),
                 updatedOn: formattedDate(item.updated_at),
             };
-        });
+        })
+    );
 
         // Construir la respuesta
         const response = {
@@ -316,6 +322,7 @@ async function getUser(user_id) {
         const response = {
             id: module[0].id,
             fullName: module[0].fullname,
+            email: module[0].email,
         };
 
         return response;
