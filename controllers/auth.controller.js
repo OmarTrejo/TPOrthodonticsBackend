@@ -6,7 +6,7 @@ const { sendAccessRequestEmail } = require('../utils/email');
 const createError = require('../utils/createError');
 
 // Login that require user and password
-const login = async (req, res) => {
+const login = async (req, res, next) => {
     const { email, password } = req.body;
 
     try {
