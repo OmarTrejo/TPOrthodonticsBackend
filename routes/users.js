@@ -8,10 +8,10 @@ const router = Router();
 
 
 router.post('/addUser', [
-    body("fullName").notEmpty().withMessage("Name is required"),
+    body("fullName").notEmpty().withMessage("FullName is required"),
     body("email").notEmpty().withMessage("Email is required"),
     body("role_id").notEmpty().withMessage("Role is required"),
-    body("dc_id").notEmpty().withMessage("Country is required"),
+    body("organizationId").notEmpty().withMessage("Country is required"),
     validateRequest
 ], addUser);
 router.get('/getAll', getUsers);

@@ -21,7 +21,7 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize) => 
             });
             whereClause = ` WHERE ${filterConditions.join(' OR ')}`;
         }
-
+        console.log(whereClause);
         // Obtener los datos paginados
         const [rows] = await pool.query(
             `${baseQuery}${whereClause} LIMIT ? OFFSET ?`,

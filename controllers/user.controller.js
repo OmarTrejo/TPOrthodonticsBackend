@@ -9,7 +9,7 @@ const { systemLogs } = require('../utils/systemLogs.js');
 
 // * Add new user
 const addUser = async (req, res, next) => {
-    const { fullName, email, phoneNumber, address, role_id, dc_id, customer_id = '' } = req.body;
+    const { fullName, email, phoneNumber, address, role_id, organizationId, customer_id = '' } = req.body;
     const user_id = req.user.id;
 
     try {
@@ -23,7 +23,7 @@ const addUser = async (req, res, next) => {
         const hash_password = encryptPassword(temp_password);
 
         // INSERT INTO DB
-        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, address, password, role_id, dc_id, customer_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [username, fullName, email, phoneNumber, address, hash_password, role_id, dc_id, customer_id, STATUS_USER.PENDING_ACTIVATION]);
+        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, address, password, role_id, dc_id, customer_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [username, fullName, email, phoneNumber, address, hash_password, role_id, organizationId, customer_id, STATUS_USER.PENDING_ACTIVATION]);
 
         // VALIDATE THAT THE USER WAS CREATED
         if (result.affectedRows === 0) {
@@ -40,7 +40,7 @@ const addUser = async (req, res, next) => {
         systemLogs(user_id, "New row inserted", result.insertId, MODULES.USERS)
 
         // SEND A EMAIL WITH PASSWORD 
-        sendWelcomeEmail(email, fullname, temp_password);
+        sendWelcomeEmail(email, fullName, temp_password);
 
         res.status(201).json({ message: 'User registered successfully' });
 
@@ -69,8 +69,7 @@ const getUsers = async (req, res, next) => {
         const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
 
             const role = await getRole(item.role_id);
-            const country = await getRole(item.coun);
-
+            const country = await getCountry(item.dc_id);
 
             return {
                 id: item.id,
@@ -83,6 +82,8 @@ const getUsers = async (req, res, next) => {
                 activedMFA: Boolean(item.mfa_enabled),
                 createdOn: formattedDate(item.created_at),
                 updatedOn: formattedDate(item.updated_at),
+                role,
+                organization: country
             };
         })
     );
@@ -115,6 +116,8 @@ const getUserById = async (req, res, next) => {
             return next(error); // Pasa el error al middleware de manejo de errores
         }
 
+        const role = await getRole(rows[0].role_id);
+        const country = await getCountry(rows[0].dc_id);
         const response = {
             id: rows[0].id,
             fullName: rows[0].fullname,
@@ -126,6 +129,8 @@ const getUserById = async (req, res, next) => {
             activedMFA: Boolean(rows[0].mfa_enabled),
             createdOn: formattedDate(rows[0].created_at),
             updatedOn: formattedDate(rows[0].updated_at),
+            role, 
+            organization: country
         };
 
         res.status(200).json(response);
@@ -315,6 +320,7 @@ async function getModule(module_id) {
         throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
     }
 }
+
 async function getUser(user_id) {
     try {
         const [module] = await pool.query(`SELECT * FROM users WHERE id = ? LIMIT 1`, [user_id]);
@@ -328,6 +334,40 @@ async function getUser(user_id) {
         return response;
     } catch (error) {
         console.error(`Error al obtener el registro del módulo ${user_id}: `, error);
+        throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
+    }
+}
+async function getRole(role_id) {
+    try {
+        const [role] = await pool.query(`SELECT * FROM role_user WHERE id = ? LIMIT 1`, [role_id]);
+
+        const response = {
+            id: role[0].id,
+            name: role[0].role_name,
+            status: Boolean(role[0].status),
+        };
+
+        return response;
+    } catch (error) {
+        console.error(`Error al obtener el registro del role ${role_id}: `, error);
+        throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
+    }
+}
+async function getCountry(organization_id) {
+
+    try {
+        const [role] = await pool.query(`SELECT * FROM dc WHERE id = ? LIMIT 1`, [organization_id]);
+
+        const response = {
+            id: role[0].id,
+            name: role[0].name,
+            commonName: role[0].commun_name,
+            status: Boolean(role[0].status),
+        };
+
+        return response;
+    } catch (error) {
+        console.error(`Error al obtener el registro del role ${organization_id}: `, error);
         throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
     }
 }
