@@ -29,7 +29,7 @@ router.delete('/delete/:id', [
 ], deleteOrganization);
 router.put('/update/:id', [
     body("name").notEmpty().withMessage("Name is required"),
-    body("commun_name").notEmpty().withMessage("Commun name is required"),
+    body("commonName").notEmpty().withMessage("Commun name is required"),
     param('id', 'El id es obligatorio').not().isEmpty(),
     param('id', 'El id debe ser un número').isNumeric(),
     validateRequest
