@@ -30,40 +30,38 @@ const getMyAccount = async (req, res, next) => {
         const notifications = conf[0];
 
         const response = {
-            systemUser: {
-                id: user.id,
-                fullName: user.fullname,
-                email: user.email,
-                phoneNumber: user.phone_number,
-                status: Boolean(user.is_enabled),
-                customerId: user.customer_id,
-                activedMFA: user.mfa_enabled,
-                role: {
-                    id: role[0].id,
-                    name: role[0].role_name
-                },
-                organization: {
-                    id: user.dc_id,
-                    name: organization[0].name,
-                    commonName: organization[0].commun_name,
-                    state: organization[0].state_province,
-                    city: organization[0].city,
-                    address: organization[0].address,
-                    status: Boolean(organization[0].status),
-                    country: {
-                        id: organization[0].id_country,
-                        name: organization[0].country,
-                        isoCode: organization[0].iso
-                    }
-                },
-                notifyByEmail: Boolean(notifications.email_enabled),
-                notifyByWhatsApp: Boolean(notifications.whatsapp),
-                notifyBySms: Boolean(notifications.sms_enabled),
-                onNewCase: Boolean(notifications.new_case),
-                onNewComment: Boolean(notifications.new_comment),
-                onNewAssignment: Boolean(notifications.new_assignment),
-                onNewAccessRequest: Boolean(notifications.new_access_request)
-            }
+            id: user.id,
+            fullName: user.fullname,
+            email: user.email,
+            phoneNumber: user.phone_number,
+            status: Boolean(user.is_enabled),
+            customerId: user.customer_id,
+            activedMFA: user.mfa_enabled,
+            role: {
+                id: role[0].id,
+                name: role[0].role_name
+            },
+            organization: {
+                id: user.dc_id,
+                name: organization[0].name,
+                commonName: organization[0].commun_name,
+                state: organization[0].state_province,
+                city: organization[0].city,
+                address: organization[0].address,
+                status: Boolean(organization[0].status),
+                country: {
+                    id: organization[0].id_country,
+                    name: organization[0].country,
+                    isoCode: organization[0].iso
+                }
+            },
+            notifyByEmail: Boolean(notifications.email_enabled),
+            notifyByWhatsApp: Boolean(notifications.whatsapp),
+            notifyBySms: Boolean(notifications.sms_enabled),
+            onNewCase: Boolean(notifications.new_case),
+            onNewComment: Boolean(notifications.new_comment),
+            onNewAssignment: Boolean(notifications.new_assignment),
+            onNewAccessRequest: Boolean(notifications.new_access_request)
         };
 
         res.status(200).json(response);
