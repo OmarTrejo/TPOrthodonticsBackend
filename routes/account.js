@@ -8,7 +8,7 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 // * Get data user
-router.get('/:id', getMyAccount);
+router.get('/', getMyAccount);
 /**
  * TODO Update profile
  */
