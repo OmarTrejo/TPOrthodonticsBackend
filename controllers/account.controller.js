@@ -74,7 +74,7 @@ const getMyAccount = async (req, res, next) => {
  * TODO update profile 
  */
 const updateProfile = async(req, res, next) => {
-    const { id } = req.user.id;
+    const  id = req.user.id;
     const { fullName, phoneNumber, notifyByEmail, notifyByWhatsApp, notifyBySms, onNewCase, onNewComment, onNewAssignment, onNewAccessRequest } = req.body;
 
     try 
