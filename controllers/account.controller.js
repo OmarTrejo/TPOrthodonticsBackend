@@ -1,8 +1,9 @@
 const pool = require('../database/config');
 const { uploadImageToS3 } = require('../utils/aws');
 const createError = require('../utils/createError');
+
 const getMyAccount = async (req, res, next) => {
-    const { id } = req.params;
+    const id = req.user.id;
 
     try {
         const [users] = await pool.query('SELECT * FROM vw_users WHERE id = ? LIMIT 1', [id]);
@@ -75,7 +76,7 @@ const getMyAccount = async (req, res, next) => {
  * TODO update profile 
  */
 const updateProfile = async(req, res, next) => {
-    const { id } = req.params;
+    const { id } = req.user.id;
     const { fullName, phoneNumber, notifyByEmail, notifyByWhatsApp, notifyBySms, onNewCase, onNewComment, onNewAssignment, onNewAccessRequest } = req.body;
 
     try 
@@ -94,7 +95,7 @@ const updateProfile = async(req, res, next) => {
 }
 
 const uploadUserPhoto = async(req, res, next) => {
-    const { id } = req.params;
+    const id = req.user.id;
     
     try
     {

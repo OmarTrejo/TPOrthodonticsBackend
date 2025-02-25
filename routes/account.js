@@ -8,17 +8,11 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 // * Get data user
-router.get('/:id', [
-    param('id', 'El id es obligatorio').not().isEmpty(),
-    param('id', 'El id debe ser un número').isNumeric(),
-    validateRequest
-], getMyAccount);
+router.get('/:id', getMyAccount);
 /**
  * TODO Update profile
  */
-router.put('/updateProfile/:id', [
-    param('id', 'El id es obligatorio').not().isEmpty(),
-    param('id', 'El id debe ser un número').isNumeric(),
+router.put('/updateProfile', [
     body("fullName").notEmpty().withMessage("FullName is required"),
     validateRequest
 ],  updateProfile);
@@ -27,9 +21,5 @@ router.put('/updateProfile/:id', [
  * TODO upload and change photo
  *
  */
-router.put('/updatePhoto/:id', upload.single('imageBase64'), [
-    param('id', 'El id es obligatorio').not().isEmpty(),
-    param('id', 'El id debe ser un número').isNumeric(),
-    validateRequest
-], uploadUserPhoto );
+router.put('/updatePhoto', upload.single('imageBase64'),uploadUserPhoto );
 module.exports = router;
