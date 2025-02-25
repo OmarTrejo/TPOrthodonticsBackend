@@ -8,6 +8,7 @@ const { paginateQuery } = require('../utils/pagination');
 const { systemLogs } = require('../utils/systemLogs.js');
 const createError = require('../utils/createError');
 const { recyclerBin } = require('../utils/recyclerbin.js');
+const { insertNotification } = require('../utils/addConfNotifications');
 
 // * Add new user
 const addUser = async (req, res, next) => {
@@ -43,6 +44,9 @@ const addUser = async (req, res, next) => {
 
         // SEND A EMAIL WITH PASSWORD 
         sendWelcomeEmail(email, fullName, temp_password);
+
+        // Insert notification
+        insertNotification(result.insertId);
 
         res.status(201).json({ message: 'User registered successfully' });
 

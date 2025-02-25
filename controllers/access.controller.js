@@ -5,6 +5,7 @@ const { sendAccessRequestDenyEmail } = require('../utils/email');
 const { paginateQuery } = require('../utils/pagination');
 const { systemLogs } = require('../utils/systemLogs');
 const createError = require('../utils/createError');
+const { insertNotification } = require('../utils/addConfNotifications');
 // const { MODULES } = require('../utils/constants');
 // const { systemLogs } = require('../utils/systemLogs');
 
@@ -82,6 +83,9 @@ const approvedRequests = async( req, res, next) => {
 
         // Save logs
         systemLogs(user_id, "Requests access has been approved", user.insertId, MODULES.REQUESTS);
+
+        // Create notifications data
+        insertNotification(user.insertId);
         
         // * Update your requests
         await pool.query('UPDATE request_user SET status = 0 WHERE id = ?', [id]);

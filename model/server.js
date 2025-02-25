@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const errorHandler = require('../middleware/errorHandler');
 const authenticateUser = require('../middleware/auth');
+const bodyParser = require('body-parser');
 
 class Server {
 
@@ -34,6 +35,8 @@ class Server {
 
         // Directorio Público
         this.app.use( express.static('public') );
+
+        this.app.use( bodyParser.json({ limit: '10mb' })  );
 
         // JWT auth
         // this.app.use(authenticateUser); // Esto no, lo aplica a todas
