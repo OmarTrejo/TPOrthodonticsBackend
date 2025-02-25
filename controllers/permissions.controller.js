@@ -64,9 +64,9 @@ const updateManyPermissions = async (req, res, next) => {
                 const { actions } = module;
                 for (const action of actions) {
                     const { id, enabled } = action;
-                    const aclId = id;
+                    const action_id = id;
                     // Actualizar la tabla de permisos
-                    await pool.query('UPDATE acl SET is_enabled = ? WHERE id = ?', [enabled, aclId]);
+                    await pool.query('UPDATE acl SET is_enabled = ? WHERE role_id = ? AND action_id = ?', [enabled, role_id, action_id]);
                 }
             }
         }
