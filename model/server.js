@@ -26,9 +26,21 @@ class Server {
     }
 
     middlewares () {
-        
+        const allowedOrigins = [
+            'https://tp-orthodontics-cases-admin.netlify.app'  // URL de tu frontend en Netlify
+          ];
+          
+          const corsOptions = {
+            origin: function (origin, callback) {
+              if (allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true);
+              } else {
+                callback(new Error('Not allowed by CORS'));
+              }
+            }
+          };
         // CORS
-        this.app.use( cors({ origin: '*'}) );
+        this.app.use( cors(corsOptions) );
 
         // Lectura y parseo del body
         this.app.use( express.json() );
