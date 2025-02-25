@@ -69,7 +69,6 @@ const getUsers = async (req, res, next) => {
 
         // Formatear los resultados
         const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
-
             const role = await getRole(item.role_id);
             const country = await getCountry(item.dc_id);
 
@@ -89,7 +88,7 @@ const getUsers = async (req, res, next) => {
                 organization: country
             };
         })
-    );
+        );
 
         // Construir la respuesta
         const response = {
@@ -132,7 +131,7 @@ const getUserById = async (req, res, next) => {
             activedMFA: Boolean(rows[0].mfa_enabled),
             createdOn: formattedDate(rows[0].created_at),
             updatedOn: formattedDate(rows[0].updated_at),
-            role, 
+            role,
             organization: country
         };
 
@@ -183,7 +182,7 @@ const updateStatus = async (req, res, next) => {
 
     try {
 
-        const [ current_user ] = await pool.query('SELECT * FROM users WHERE id = ?', [id])
+        const [current_user] = await pool.query('SELECT * FROM users WHERE id = ?', [id])
 
         if (current_user[0].status_id === STATUS_USER.PENDING_ACTIVATION) {
             const error = createError(
@@ -252,14 +251,14 @@ const getLogs = async (req, res, next) => {
         // * Conversión y validación
         const validatedPage = parseInt(page, 10) || 1;
         const validatedPageSize = parseInt(pageSize, 10) || 10;
-    
+
         // * SQL Query base
         const baseQuery = "SELECT * FROM vw_logs";
         const countQuery = "SELECT COUNT(*) AS total FROM vw_logs";
-    
+
         // Obtener datos paginados
         const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
-    
+
         // Formatear los resultados y obtener registros adicionales por módulo
         const filteredResponse = await Promise.all(
             paginatedData.results.map(async (item) => {
@@ -276,7 +275,7 @@ const getLogs = async (req, res, next) => {
                         module,
                         action: item.action, // Incluir el registro obtenido,
                         systemUser
-                        
+
                     };
                 } catch (error) {
                     console.error(`Error procesando el item con id ${item.id}:`, error);
@@ -288,17 +287,16 @@ const getLogs = async (req, res, next) => {
                 }
             })
         );
-    
+
         // Construir la respuesta
         const response = {
             ...paginatedData,
             results: filteredResponse,
         };
-    
+
         res.status(200).json(response);
     }
-    catch(error)
-    {
+    catch (error) {
         next(error)
     }
 }
@@ -313,7 +311,7 @@ async function getRecordByModule(item) {
 
     try {
         const [record] = await pool.query(`SELECT * FROM ${table} WHERE id = ? LIMIT 1`, [item.modified_id]);
-        
+
         const response = {
             id: record[0].id,
             name: record[0].name != null ? record[0].name : record[0].fullname,
@@ -362,6 +360,11 @@ async function getRole(role_id) {
     try {
         const [role] = await pool.query(`SELECT * FROM role_user WHERE id = ? LIMIT 1`, [role_id]);
 
+        // Validar si el role tiene datos
+        if (role.length === 0) {
+            return null;
+        }
+
         const response = {
             id: role[0].id,
             name: role[0].role_name,
@@ -377,18 +380,23 @@ async function getRole(role_id) {
 async function getCountry(organization_id) {
 
     try {
-        const [role] = await pool.query(`SELECT * FROM dc WHERE id = ? LIMIT 1`, [organization_id]);
+        const [organization] = await pool.query(`SELECT * FROM dc WHERE id = ? LIMIT 1`, [organization_id]);
+
+        // Validar si el role tiene datos
+        if (organization.length === 0) {
+            return null;
+        }
 
         const response = {
-            id: role[0].id,
-            name: role[0].name,
-            commonName: role[0].commun_name,
-            status: Boolean(role[0].status),
+            id: organization[0].id,
+            name: organization[0].name,
+            commonName: organization[0].commun_name,
+            status: Boolean(organization[0].status),
         };
 
         return response;
     } catch (error) {
-        console.error(`Error al obtener el registro del role ${organization_id}: `, error);
+        console.error(`Error al obtener el registro de la organization ${organization_id}: `, error);
         throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
     }
 }
