@@ -69,8 +69,26 @@ const getDCs = async (req, res, next) => {
     }
 }
 
+const getCaseStatus = async (req, res, next) => {
+    try {
+        const [rows] = await pool.query('SELECT id, status, span_color, general FROM status_case');
+        const filteredResponse = rows.map((item) => {
+            return {
+                id: item.id,
+                name: item.status,
+                color: item.span_color,
+                general: Boolean(item.general)
+            };
+        })
+        res.status(200).json(filteredResponse);
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     getCountries,
-    getRoles, getTypeCase, getDCs
+    getRoles, getTypeCase, getDCs,
+    getCaseStatus
 }
 
