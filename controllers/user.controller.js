@@ -434,6 +434,8 @@ const deletedMany = async (req, res, next) => {
         // Logs inserts
         ids.forEach(id => {
             systemLogs(user_id, "Row deleted", id, MODULES.USERS);
+
+            recyclerBin(id, MODULES.USERS, user_id);
         });
 
         res.status(204).json({ message: 'Users deleted successfully' });
