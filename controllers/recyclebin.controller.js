@@ -148,19 +148,20 @@ const restoreRecycleBin = async (req, res, next) => {
         }
 
         // Get the module
-        const module = await getModule(recyclerbin[0].module_id);
-
-        if( module.name === MODULES.USERS )
+        const record = await getModule(recyclerbin[0].module_id);
+        // Asignar 
+        const module = record;
+        if( module.id === MODULES.USERS )
         {
             // Update status_id and deleted_at
             await pool.query(`UPDATE users SET status_id = ?, is_deleted = 0 WHERE id = ?`, [STATUS_USER.ACTIVE, recyclerbin[0].record_id]);
         }
-        else if( module.name === MODULES.ORGANIZATION )
+        else if( module.id === MODULES.COUNTRIES )
         {
             // Update status_id and deleted_at
             await pool.query(`UPDATE dc SET is_deleted = 0 WHERE id = ?`, [recyclerbin[0].record_id]);
         }
-        else if( module.name === MODULES.CASES )
+        else if( module.id === MODULES.CASES )
         {
             // Update status_id and deleted_at
             await pool.query(`UPDATE cases SET is_deleted = 0 WHERE id = ?`, [recyclerbin[0].record_id]);
