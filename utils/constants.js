@@ -10,6 +10,17 @@ const MODULES = {
     DASHBOARD: 8
 }
 
+const STATUS_CASE = {
+    UNNASIGNED: 12,
+    IN_PROGRESS: 13,
+    WAITING_VALIDATION: 14,
+    WAITING_CONFIRMATION: 15,
+    ONHOLD: 16,
+    REQUIRES_APPROVAL: 17,
+    CLOSED: 18,
+    CANCELLED: 19,
+}
+
 const STATUS_USER = {
     ACTIVE: 6,
     INACTIVE: 7,
@@ -34,5 +45,6 @@ module.exports = {
     MODULES,
     STATUS_USER,
     TABLE_MAPPING,
-    ROLES_USER
+    ROLES_USER,
+    STATUS_CASE
 }

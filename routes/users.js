@@ -46,6 +46,7 @@ router.put('/deleteMany', [
 router.put('/updatePassword', [
     body("token").notEmpty().withMessage("Token is required"),
     body("password").notEmpty().withMessage("Password is required"),
+    body("password").isLength({min:8}).withMessage("Password must be at least 8 characters long"),
     validateRequest
 ], changePassword);
 
