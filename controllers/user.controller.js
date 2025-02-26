@@ -69,7 +69,7 @@ const getUsers = async (req, res, next) => {
         const countQuery = "SELECT COUNT(*) AS total FROM vw_users";
 
         // Obtener datos paginados
-        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
+        const paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, user_id}, validatedPage, validatedPageSize);
 
         // Formatear los resultados
         const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
@@ -405,6 +405,42 @@ async function getCountry(organization_id) {
     }
 }
 
+/**
+ * TODO Delete Many users
+ */
+const deletedMany = async (req, res, next) => {
+    const { ids } = req.body;
+    const user_id = req.user.id;
+
+    try {
+        const placeholders = ids.map(() => '?').join(', ');
+        const query = `UPDATE users SET is_deleted = 1, status_id = ? WHERE id IN (${placeholders})`;
+
+        // Combina el status_id con los ids en un solo array
+        const params = [STATUS_USER.DELETED, ...ids];
+
+        const [result] = await pool.query(query, params);
+
+        if (result.affectedRows === 0) {
+            const error = createError(
+                "Error to delete users, please try again later", // Mensaje de error
+                ["Error into database"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Logs inserts
+        ids.forEach(id => {
+            systemLogs(user_id, "Row deleted", id, MODULES.USERS);
+        });
+
+        res.status(204).json({ message: 'Users deleted successfully' });
+    } catch (error) {
+        next(error)
+    }
+}
 module.exports = {
     getUsers,
     addUser,
@@ -412,5 +448,6 @@ module.exports = {
     updateUser,
     updateStatus,
     deleteUser,
-    getLogs
+    getLogs,
+    deletedMany
 }

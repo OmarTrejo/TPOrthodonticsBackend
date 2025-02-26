@@ -14,38 +14,41 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize) => 
         const filterValues = [];
 
         if (filters && Object.keys(filters).length > 0) {
-            const filterConditions = Object.keys(filters).map((key) => {
-                if (key === 'is_deleted') {
-                    filterValues.push(filters[key]);
-                    return `${key} = ?`;
-                } else {
-                    filterValues.push(`%${filters[key]}%`);
-                    return `${key} LIKE ?`;
+            const filterConditions = [];
+
+            // Agregar el filtro para excluir al usuario logueado (si existe)
+            if (filters.user_id) {
+                filterConditions.push('id != ?');
+                filterValues.push(filters.user_id);
+            }
+
+            // Agregar otros filtros dinámicos
+            Object.keys(filters).forEach((key) => {
+                if (key !== 'user_id') { // Evitar procesar user_id nuevamente
+                    if (key === 'is_deleted') {
+                        filterConditions.push(`${key} = ?`);
+                        filterValues.push(filters[key]);
+                    } else {
+                        filterConditions.push(`${key} LIKE ?`);
+                        filterValues.push(`%${filters[key]}%`);
+                    }
                 }
             });
 
-            if (filters.hasOwnProperty('is_deleted')) {
-                // Si existe el filtro is_deleted
-                const otherConditions = filterConditions.filter(cond => !cond.startsWith('is_deleted'));
-
-                if (otherConditions.length > 0) {
-                    // Si hay otros filtros, agregar el paréntesis
-                    whereClause = ` WHERE is_deleted = ? AND (${otherConditions.join(' OR ')})`;
-                } else {
-                    // Si no hay otros filtros, solo usar is_deleted
-                    whereClause = ` WHERE is_deleted = ?`;
-                }
-            } else {
-                // Si no existe el filtro is_deleted, solo usar los demás filtros
-                whereClause = ` WHERE ${filterConditions.join(' OR ')}`;
+            // Construir la cláusula WHERE
+            if (filterConditions.length > 0) {
+                whereClause = ` WHERE ${filterConditions.join(' AND ')}`;
             }
         }
+
+        console.log(`${baseQuery}${whereClause} LIMIT ? OFFSET ?`, [...filterValues, pageSize, offset]);
 
         // Obtener los datos paginados
         const [rows] = await pool.query(
             `${baseQuery}${whereClause} LIMIT ? OFFSET ?`,
             [...filterValues, pageSize, offset]
         );
+
         // Obtener el número total de filas
         const [totalRows] = await pool.query(
             `${countQuery}${whereClause}`,
@@ -66,6 +69,6 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize) => 
     } catch (error) {
         throw error;
     }
-}
+};
 
 module.exports = { paginateQuery };
