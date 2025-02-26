@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { body, param } = require('express-validator');
 
-const { getUsers, addUser, getUserById, updateUser, updateStatus, deleteUser, getLogs, deletedMany } = require('../controllers/user.controller');
+const { getUsers, addUser, getUserById, updateUser, updateStatus, deleteUser, getLogs, deletedMany, changePassword } = require('../controllers/user.controller');
 const validateRequest = require('../middleware/validateRequest');
 
 const router = Router();
@@ -43,6 +43,10 @@ router.put('/deleteMany', [
     body("ids").notEmpty().withMessage("ID´s are required"),
     validateRequest
 ], deletedMany);
-
+router.put('/updatePassword', [
+    body("token").notEmpty().withMessage("Token is required"),
+    body("password").notEmpty().withMessage("Password is required"),
+    validateRequest
+], changePassword);
 
 module.exports = router;

@@ -1,8 +1,8 @@
 const pool = require('../database/config');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { encryptPassword } = require('../utils/password');
-const { sendAccessRequestEmail } = require('../utils/email');
+const { encryptPassword, generateTempPassword } = require('../utils/password');
+const { sendEmailForgotPassword, sendAccessRequestEmail } = require('../utils/email');
 const createError = require('../utils/createError');
 
 // Login that require user and password
@@ -106,6 +106,7 @@ const login = async (req, res, next) => {
                 customerId: user.customer_id,
                 activedMFA: user.mfa_enabled,
                 avatarUrl: user.photo,
+                forgotPassword: Boolean(user.recovery_password),
                 role: {
                     id: role[0].id,
                     name: role[0].role_name,
@@ -191,6 +192,77 @@ const addAccessRequests = async (req, res, next) => {
     }
 }
 
+/**
+ * TODO - Generate a forgot password, send a email with Token and temp password
+ * @param {email} req 
+ * @param {message} res 
+ * @returns 
+ */
+
+const forgotPassword = async( req, res, next) => {
+    const { email } = req.body;
+
+    try {
+        const [rows] = await pool.query('SELECT * FROM vw_users WHERE email = ?', [email]);
+
+        if (rows.length === 0) {
+            const error = createError(
+                "Email not found", // Mensaje de error
+                ["The email not exists"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Get user data
+        const user = rows[0];
+
+        // Validate if users is not deleted
+        if (user.is_deleted) {
+            const error = createError(
+                "User not found", // Mensaje de error
+                ["User is deleted"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Validate if users is enabled
+        if (!user.is_enabled) {
+            const error = createError(
+                "User is not enabled", // Mensaje de error
+                ["The user does´t have permissions"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Generate a temp password
+        const tempPassword = generateTempPassword(10);
+
+        // Generate a token with 8 numbers
+        const token = Math.floor(10000000 + Math.random() * 90000000).toString();
+
+        // Encrypt password
+        const passwordEncrypted = await encryptPassword(tempPassword);
+
+        // Update user password
+        await pool.query('UPDATE users SET password = ?, recovery_password = 1, mfa_enabled = 0, token_verification=? WHERE id = ?', [passwordEncrypted, token, user.id]);
+
+        // Send email notification
+        sendEmailForgotPassword(email, user.fullname, tempPassword, token)
+
+        // * Response the application
+        return res.status(200).json({message: 'Request to recovery password sent successfully.'});
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 const validateMFA = async (req, res) => {
     const { userId, mfaCode } = req.body;
 
@@ -220,4 +292,4 @@ const validateMFA = async (req, res) => {
 }
 
 
-module.exports = { login, addAccessRequests };
+module.exports = { login, addAccessRequests, forgotPassword };

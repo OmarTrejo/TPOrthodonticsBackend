@@ -443,6 +443,71 @@ const deletedMany = async (req, res, next) => {
         next(error)
     }
 }
+
+/**
+ * TODO Update password with next params
+ * @param {Token, new password, confirm password} req 
+ * @param {message} res 
+ */
+const changePassword = async (req, res, next) => {
+    const { token, password, confirmPassword } = req.body;
+    const user_id = req.user.id;
+
+    try {
+        // Validate if token is valid
+        const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [user_id]);
+
+        if (rows.length === 0) {
+            const error = createError(
+                "User not found", // Mensaje de error
+                ["The user not exists"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Set a user
+        const user = rows[0];
+
+        console.log(user)
+
+        // Validate if password and confirmPassword are the same
+        if (password !== confirmPassword) {
+            const error = createError(
+                "Password and confirm password are not the same", // Mensaje de error
+                ["The password and confirm password are not the same"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Validate token
+        if (user.token_verification !== token) {
+            const error = createError(
+                "Token is not valid", // Mensaje de error
+                ["The token is not valid"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        // Encrypt password
+        const passwordEncrypted = await encryptPassword(password);
+
+        // Update user password
+        await pool.query('UPDATE users SET password = ?, recovery_password = 0, token_verification = ? WHERE id = ?', [passwordEncrypted, null, user_id]);
+
+        // * Response the application
+        return res.status(200).json({message: 'Password changed successfully.'});
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
     getUsers,
     addUser,
@@ -451,5 +516,6 @@ module.exports = {
     updateStatus,
     deleteUser,
     getLogs,
-    deletedMany
+    deletedMany,
+    changePassword
 }

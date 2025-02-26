@@ -1,7 +1,7 @@
 const pool = require('../database/config');
 const { MODULES, ROLES_USER, STATUS_USER } = require('../utils/constants');
 const { formattedDate } = require('../utils/dates');
-const { sendAccessRequestDenyEmail } = require('../utils/email');
+const { sendAccessRequestDenyEmail, sendAccessRequestApprovedEmail } = require('../utils/email');
 const { paginateQuery } = require('../utils/pagination');
 const { systemLogs } = require('../utils/systemLogs');
 const createError = require('../utils/createError');
@@ -89,6 +89,9 @@ const approvedRequests = async( req, res, next) => {
         
         // * Update your requests
         await pool.query('UPDATE request_user SET status = 0 WHERE id = ?', [id]);
+
+        // Send email with new password
+        sendAccessRequestApprovedEmail(new_user.email, new_user.fullname);
 
         res.status(201).json({message: 'Request access has been approved succesfully'});
     }catch(error)
