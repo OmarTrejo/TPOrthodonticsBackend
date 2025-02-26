@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { body, param } = require('express-validator');
 
 const validateRequest = require('../middleware/validateRequest');
-const { getAllRecycleBin, getByIDRecycleBin } = require('../controllers/recyclebin.controller');
+const { getAllRecycleBin, getByIDRecycleBin, restoreRecycleBin } = require('../controllers/recyclebin.controller');
 
 const router = Router();
 
@@ -12,6 +12,9 @@ router.get('/getById/:id',[
     param('id').isInt().withMessage('El ID debe ser un número entero'),
     validateRequest
 ], getByIDRecycleBin);
-
+router.put('/restore/:id',[
+    param('id').isInt().withMessage('El ID debe ser un número entero'),
+    validateRequest
+], restoreRecycleBin);
 
 module.exports = router;

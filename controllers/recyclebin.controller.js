@@ -2,6 +2,7 @@ const pool = require("../database/config.js");
 const { paginateQuery } = require('../utils/pagination');
 const { STATUS_USER, MODULES, TABLE_MAPPING } = require('../utils/constants.js');
 const { formattedDate } = require("../utils/dates");
+const { systemLogs } = require("../utils/systemLogs.js");
 
 const getAllRecycleBin = async (req, res, next) => {
     const { page, pageSize, ...filters } = req.query;
@@ -125,7 +126,60 @@ async function getUser(user_id) {
     }
 }
 
+/** TODO
+ * TODO Restore record
+ * Validate if the record exists in the recycle bin
+ *  Validate if the record exists in the module
+ *  Restore the record
+ *  Update the record in the module
+ *  Update the record in the recycle bin
+ *  Return the response
+ */
+const restoreRecycleBin = async (req, res, next) => {
+    // Get ID
+    const { id } = req.params;
+    const user_id = req.user.id;
+
+    try {
+        const [recyclerbin] = await pool.query(`SELECT * FROM recyclebin WHERE id = ? LIMIT 1`, [id]);
+
+        if (recyclerbin.length === 0) {
+            return res.status(404).json({ message: 'Record not found' });
+        }
+
+        // Get the module
+        const module = await getModule(recyclerbin[0].module_id);
+
+        if( module.name === MODULES.USERS )
+        {
+            // Update status_id and deleted_at
+            await pool.query(`UPDATE users SET status_id = ?, is_deleted = 0 WHERE id = ?`, [STATUS_USER.ACTIVE, recyclerbin[0].record_id]);
+        }
+        else if( module.name === MODULES.ORGANIZATION )
+        {
+            // Update status_id and deleted_at
+            await pool.query(`UPDATE dc SET is_deleted = 0 WHERE id = ?`, [recyclerbin[0].record_id]);
+        }
+        else if( module.name === MODULES.CASES )
+        {
+            // Update status_id and deleted_at
+            await pool.query(`UPDATE cases SET is_deleted = 0 WHERE id = ?`, [recyclerbin[0].record_id]);
+        }
+        
+        // Update status_id and deleted_at
+        await pool.query(`UPDATE recyclebin SET status = 0 WHERE id = ?`, [id]);
+
+        // Notificar que hubo una restauración
+        systemLogs(user_id,`Restore record ${id}`, id, MODULES.RECYCLE_BIN);
+
+        res.status(200).json({message:"Restore record successfully"});
+    } catch (error) {
+        next(error)
+    }
+};
+
 module.exports = {
     getAllRecycleBin,
-    getByIDRecycleBin
+    getByIDRecycleBin,
+    restoreRecycleBin
 }
