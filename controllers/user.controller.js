@@ -69,7 +69,7 @@ const getUsers = async (req, res, next) => {
         const countQuery = "SELECT COUNT(*) AS total FROM vw_users";
 
         // Obtener datos paginados
-        const paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, user_id}, validatedPage, validatedPageSize);
+        const paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, id:user_id}, validatedPage, validatedPageSize);
 
         // Formatear los resultados
         const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
