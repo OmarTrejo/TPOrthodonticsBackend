@@ -1,6 +1,17 @@
 const pool = require('../database/config');
 
-const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize) => {
+/**
+ * TODO create a pagination from a query 
+ * @param {*} baseQuery 
+ * @param {*} countQuery 
+ * @param {*} filters 
+ * @param {*} page 
+ * @param {*} pageSize 
+ * @param {*} orderBy 
+ * @returns 
+ */
+
+const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, orderBy = {}) => {
     try {
         // Validar parámetros de paginación
         if (page < 1 || pageSize < 1) {
@@ -41,11 +52,23 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize) => 
             }
         }
 
-        // console.log(`${baseQuery}${whereClause} LIMIT ? OFFSET ?`, [...filterValues, pageSize, offset]);
+        // Construir la cláusula ORDER BY
+        let orderByClause = '';
+        if (orderBy.column && orderBy.direction) {
+            const validDirections = ['ASC', 'DESC'];
+            if (!validDirections.includes(orderBy.direction.toUpperCase())) {
+                throw new Error('La dirección del orden debe ser "ASC" o "DESC"');
+            }
+            orderByClause = ` ORDER BY ${orderBy.column} ${orderBy.direction}`;
+        }
+
+        console.log(orderByClause)
+
+        console.log(`${baseQuery}${whereClause} LIMIT ? OFFSET ?`, [...filterValues, pageSize, offset]);
 
         // Obtener los datos paginados
         const [rows] = await pool.query(
-            `${baseQuery}${whereClause} LIMIT ? OFFSET ?`,
+            `${baseQuery}${whereClause}${orderByClause} LIMIT ? OFFSET ?`,
             [...filterValues, pageSize, offset]
         );
 

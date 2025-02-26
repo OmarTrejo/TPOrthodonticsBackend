@@ -17,6 +17,7 @@ class Server {
         this.recycleBinPath = '/api/recyclebin';
         this.permissionPath = '/api/permissions';
         this.myaccountPath = '/api/myaccount';
+        this.casesPath = '/api/cases';
 
         //Middlewares
         this.middlewares();
@@ -53,6 +54,7 @@ class Server {
         this.app.use(this.recycleBinPath, authenticateUser, require('../routes/recyclebin'));
         this.app.use(this.permissionPath, authenticateUser, require('../routes/permissions'));
         this.app.use(this.myaccountPath, authenticateUser, require('../routes/account'));
+        this.app.use(this.casesPath, authenticateUser, require('../routes/cases'));
     }
 
     listen(){     

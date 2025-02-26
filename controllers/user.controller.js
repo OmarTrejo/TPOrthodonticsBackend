@@ -260,8 +260,11 @@ const getLogs = async (req, res, next) => {
         const baseQuery = "SELECT * FROM vw_logs";
         const countQuery = "SELECT COUNT(*) AS total FROM vw_logs";
 
+        // Add order by to the filters
+        const orderBy = { column: 'created_at', direction: 'DESC' };
+
         // Obtener datos paginados
-        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
+        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize, orderBy);
 
         // Formatear los resultados y obtener registros adicionales por módulo
         const filteredResponse = await Promise.all(
