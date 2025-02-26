@@ -27,6 +27,34 @@ const getMyAccount = async (req, res, next) => {
 
         const [conf] = await pool.query('SELECT * FROM vw_configurations WHERE id = 1 LIMIT 1');
 
+        // Consultar los modulos del role
+        const [acls] = await pool.query('SELECT * FROM vw_access_control_list WHERE role_id = ?', [user.role_id]);
+
+        // Construir la estructura de módulos y acciones
+        const modulesMap = new Map();
+
+        // Generación de map
+        for (const acl of acls) {
+            if (!modulesMap.has(acl.module_id)) {
+                modulesMap.set(acl.module_id, {
+                    id: acl.module_id,
+                    name: acl.module,
+                    status: Boolean(acl.is_enabled),
+                    actions: []
+                });
+            }
+
+            const module = modulesMap.get(acl.module_id);
+
+            module.actions.push({
+                id: acl.action_id,
+                name: acl.action_name,
+                enabled: Boolean(acl.is_enabled) // Asumimos que todas las acciones están habilitadas
+            });
+        }
+
+        const modules = Array.from(modulesMap.values());
+
         const notifications = conf[0];
 
         const response = {
@@ -39,7 +67,8 @@ const getMyAccount = async (req, res, next) => {
             activedMFA: user.mfa_enabled,
             role: {
                 id: role[0].id,
-                name: role[0].role_name
+                name: role[0].role_name,
+                modules
             },
             organization: {
                 id: user.dc_id,
@@ -61,7 +90,8 @@ const getMyAccount = async (req, res, next) => {
             onNewCase: Boolean(notifications.new_case),
             onNewComment: Boolean(notifications.new_comment),
             onNewAssignment: Boolean(notifications.new_assignment),
-            onNewAccessRequest: Boolean(notifications.new_access_request)
+            onNewAccessRequest: Boolean(notifications.new_access_request),
+            avatarUrl: user.photo,
         };
 
         res.status(200).json(response);
@@ -83,7 +113,7 @@ const updateProfile = async(req, res, next) => {
         await pool.query('UPDATE users SET fullname = ?, phone_number = ? WHERE id = ?', [fullName, phoneNumber, id]);
 
         // Update conf_notification
-        await pool.query('UPDATE conf_notification SET email_enabled = ?, whatsapp = ?, sms_enabled = ?, new_case = ?, new_comment = ?, new_assignment = ?, new_access_request = ? WHERE id = ?', [notifyByEmail, notifyByWhatsApp, notifyBySms, onNewCase, onNewComment, onNewAssignment, onNewAccessRequest, id]);
+        await pool.query('UPDATE conf_notification SET email_enabled = ?, whatsapp = ?, sms_enabled = ?, new_case = ?, new_comment = ?, new_assignment = ?, new_access_request = ? WHERE user_id = ?', [notifyByEmail, notifyByWhatsApp, notifyBySms, onNewCase, onNewComment, onNewAssignment, onNewAccessRequest, id]);
 
         res.status(200).json({message:"Profile updated succesfully"});
     }catch(error)

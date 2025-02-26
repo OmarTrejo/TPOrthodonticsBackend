@@ -105,6 +105,7 @@ const login = async (req, res, next) => {
                 status: Boolean(user.is_enabled),
                 customerId: user.customer_id,
                 activedMFA: user.mfa_enabled,
+                avatarUrl: user.photo,
                 role: {
                     id: role[0].id,
                     name: role[0].role_name,
