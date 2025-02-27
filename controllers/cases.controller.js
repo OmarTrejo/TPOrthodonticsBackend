@@ -127,7 +127,7 @@ const createCase = async (req, res, next) => {
         }
 
         // Convertir archivo a base64
-        const attachmentTreatmentType = req.file.buffer.toString('base64');
+        const attachmentTreatmentType = req.file.buffer;
 
         // Convert size to MB
         const attachmentFormSize = (req.file.size / (1024 * 1024)).toFixed(2);
@@ -247,7 +247,7 @@ const uploadMultipleFiles = async (req, res, next) => {
 
         // Iterar sobre los archivos
         for (const file of req.files) {
-            const attachmentFormBase64 = file.buffer.toString('base64');
+            const attachmentFormBase64 = file.buffer;
             const attachmentFormSize = (file.size / (1024 * 1024)).toFixed(2);
             const safeAttachmentFormName = path.basename(file.originalname).replace(/\s/g, "_");
             const safeExtension = path.extname(file.originalname);
