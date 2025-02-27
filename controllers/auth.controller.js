@@ -124,6 +124,7 @@ const login = async (req, res, next) => {
             module.actions.push({
                 id: acl.action_id,
                 name: acl.action_name,
+                schemaName: acl.acSchemaName,
                 enabled: Boolean(acl.is_enabled) // Asumimos que todas las acciones están habilitadas
             });
         }
