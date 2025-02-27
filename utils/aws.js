@@ -54,7 +54,7 @@ const deleteFileFromS3 = async (fileUrl) => {
       const bucketName = process.env.AWS_BUCKET_NAME; // Cambia esto por el nombre de tu bucket
   
       // Extraer la "key" del archivo desde la URL
-      const fileKey = fileUrl.split(`${bucketName}/`)[1];
+      const fileKey = getFileKeyFromUrl(fileUrl);
 
       console.log(fileKey);
   
@@ -73,6 +73,26 @@ const deleteFileFromS3 = async (fileUrl) => {
       console.log(`Archivo eliminado: ${fileKey}`);
     } catch (error) {
       console.error("Error eliminando el archivo:", error);
+    }
+  };
+
+/**
+ * Extrae la "Key" del archivo desde la URL completa de S3.
+ * @param {string} fileUrl - URL pública del archivo en S3
+ * @returns {string} Key del archivo en S3
+ */
+const getFileKeyFromUrl = (fileUrl) => {
+    try {
+      const urlObj = new URL(fileUrl);
+      
+      // Extrae la parte después del bucket (sin la región)
+      const bucketName = "tporthodontics-repository"; // Asegúrate de que sea correcto
+      const key = urlObj.pathname.replace(`/${bucketName}/`, "").substring(1); // Quita la primera "/"
+  
+      return key;
+    } catch (error) {
+      console.error("Error al extraer la key del archivo:", error);
+      return null;
     }
   };
 

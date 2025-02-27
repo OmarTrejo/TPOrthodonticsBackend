@@ -425,7 +425,7 @@ const getFilesCases = async (req, res, next) => {
 
     try {
         // Get files by id
-        const [results] = await pool.query('SELECT * FROM vw_files_cases WHERE case_id = ?', [id]);
+        const [results] = await pool.query('SELECT * FROM vw_files_cases WHERE case_id = ? AND status = 1', [id]);
 
         if (results.length === 0) {
             return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
