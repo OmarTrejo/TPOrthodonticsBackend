@@ -603,7 +603,7 @@ const deleteManyCases = async (req, res, next) => {
             recyclerBin(id, MODULES.CASES, user_id);
         });
 
-        res.status(204).json();
+        res.status(200).json({message:"Cases deleted successfully"});
     } catch (error) {
         next(error);
     }
