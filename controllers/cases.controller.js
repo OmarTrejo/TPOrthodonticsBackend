@@ -107,13 +107,18 @@ const createCase = async (req, res, next) => {
         const { name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId } = req.body;
         const user_id = req.user.id; // Doctor
 
-        if (!name || !patientName || !treatmentTypeId) {
-            return next(createError("Required fields are missing", ["name are missing", "patient name are missing", "treatmentTypeId are missing"], req.traceId, req.originalUrl));
+        // Get treatmentType
+        const [treatmentType] = await pool.query('SELECT id, type_name, is_pdf_file FROM type_case WHERE id = ? LIMIT 1', [treatmentTypeId])
+
+        if (treatmentType[0].is_pdf_file) {
+            // Validar archivo
+            if (!req.file) {
+                return next(createError("Error, file is required", ["Database connection error"], req.traceId, req.originalUrl));
+            }
         }
 
-        // Validar archivo
-        if (!req.file) {
-            return next(createError("Error, file is required", ["Database connection error"], req.traceId, req.originalUrl));
+        if (!name || !patientName || !treatmentTypeId) {
+            return next(createError("Required fields are missing", ["name are missing", "patient name are missing", "treatmentTypeId are missing"], req.traceId, req.originalUrl));
         }
 
         const [user] = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user_id]);
@@ -127,25 +132,26 @@ const createCase = async (req, res, next) => {
             return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
         }
 
-        // Convertir archivo a base64
-        const attachmentTreatmentType = req.file.buffer;
-
-        // Convert size to MB
-        const attachmentFormSize = (req.file.size / (1024 * 1024)).toFixed(2);
-
-        const fileName = req.file.originalname;  // Nombre original del archivo
-        const extension = fileName.split('.').pop(); // Extraer la extensión
-        // Nombre seguro del archivo
-
-        const safeAttachmentFormName = path.basename(fileName).replace(/\s/g, "_");
-
-        const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}`;
-
         // Subir archivo a S3
         try {
-            const urlFile = await uploadFileToS3(attachmentTreatmentType, folderName);
-            // Save into database
-            saveUploadedFile(caseCreated.insertId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, extension);
+            if (treatmentType[0].is_pdf_file) {
+                // Convertir archivo a base64
+                const attachmentTreatmentType = req.file.buffer;
+    
+                // Convert size to MB
+                const attachmentFormSize = (req.file.size / (1024 * 1024)).toFixed(2);
+    
+                const fileName = req.file.originalname;  // Nombre original del archivo
+                const extension = fileName.split('.').pop(); // Extraer la extensión
+                // Nombre seguro del archivo
+    
+                const safeAttachmentFormName = path.basename(fileName).replace(/\s/g, "_");
+    
+                const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}`;
+                const urlFile = await uploadFileToS3(attachmentTreatmentType, folderName);
+                // Save into database
+                saveUploadedFile(caseCreated.insertId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, extension);
+            }
         } catch (error) {
             console.error("Error uploading to S3:", error);
             return next(createError("Failed to upload file", [error.message], req.traceId, req.originalUrl));
@@ -367,7 +373,7 @@ const getMessageCases = async (req, res, next) => {
         const orderBy = { column: 'created_at', direction: 'DESC' };
 
         // Obtener datos paginados
-        const paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, case_id: id }, validatedPage, validatedPageSize, orderBy);
+        const paginatedData = await paginateQuery(baseQuery, countQuery, { ...filters, case_id: id }, validatedPage, validatedPageSize, orderBy);
 
         // Formatear los resultados
         const filteredResponse = await Promise.all(
@@ -432,16 +438,16 @@ const getFilesCases = async (req, res, next) => {
         }
 
         const filteredResponse = results.map((item) => {
-                return {
-                    id: item.id,
-                    url: item.url_file,
-                    name: item.file_name,
-                    size: item.size,
-                    extension: item.extension,
-                    uploadedDate: formattedDate(item.created_at),
-                    caseId: item.case_id,
-                };
-            });
+            return {
+                id: item.id,
+                url: item.url_file,
+                name: item.file_name,
+                size: item.size,
+                extension: item.extension,
+                uploadedDate: formattedDate(item.created_at),
+                caseId: item.case_id,
+            };
+        });
 
         res.status(200).json(filteredResponse);
     } catch (error) {
@@ -499,7 +505,7 @@ const getCaseById = async (req, res, next) => {
             id: caseData.id,
             name: caseData.name,
             patientName: caseData.patient_name,
-            caseStatus:  {
+            caseStatus: {
                 id: caseStatus[0].id,
                 name: caseStatus[0].status,
                 color: caseStatus[0].span_color,
@@ -619,7 +625,7 @@ const deleteManyCases = async (req, res, next) => {
             recyclerBin(id, MODULES.CASES, user_id);
         });
 
-        res.status(200).json({message:"Cases deleted successfully"});
+        res.status(200).json({ message: "Cases deleted successfully" });
     } catch (error) {
         next(error);
     }

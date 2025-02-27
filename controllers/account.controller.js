@@ -1,4 +1,7 @@
 const pool = require('../database/config');
+const speakeasy = require('speakeasy');
+const QRCode = require('qrcode');
+
 const { uploadImageToS3 } = require('../utils/aws');
 const createError = require('../utils/createError');
 
@@ -156,8 +159,73 @@ const uploadUserPhoto = async(req, res, next) => {
     }
 }
 
+/**
+ * Activate or enabled MFA
+ */
+const enabledMFA = async(req, res, next) => {
+    const id = req.user.id;
+    const secret = speakeasy.generateSecret({ length: 20 });
+
+    // Generar URL compatible con Google Authenticator, Authy, Microsoft Authenticator
+    const otpauthUrl = secret.otpauth_url + `&issuer=MiApp`;
+
+    const qrCodeImage = await QRCode.toDataURL(otpauthUrl);
+
+    try
+    {
+        // Update user data
+        await pool.query('UPDATE users SET mfa_secret = ? WHERE id = ?', [secret.base32, id]);
+
+        res.status(200).json({ qrCodeImage, secret: secret.base32});
+    }catch(error)
+    {
+        next(error);
+    }
+}
+
+/**
+ * Verify MFA
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+const veryfiedMFA = async(req, res, next) => {
+    const id = req.user.id;
+    const { token } = req.body;
+
+    try
+    {
+        const [users] = await pool.query('SELECT mfa_secret FROM users WHERE id = ? LIMIT 1', [id]);
+        const user = users[0];
+
+        const verified = speakeasy.totp.verify({
+            secret: user.mfa_secret,
+            encoding: 'base32',
+            token: token
+        });
+
+        if (!verified) {
+            const error = createError(
+                "Invalid token", // Mensaje de error
+                ["The token is not valid"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+
+        res.status(200).json({message:"MFA verified succesfully"});
+    }catch(error)
+    {
+        next(error);
+    }
+}
+
 module.exports = {
     getMyAccount,
     updateProfile,
-    uploadUserPhoto
+    uploadUserPhoto,
+    enabledMFA,
+    veryfiedMFA
 }
