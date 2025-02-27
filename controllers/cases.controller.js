@@ -123,19 +123,17 @@ const createCase = async (req, res, next) => {
 
         const fileName = req.file.originalname;  // Nombre original del archivo
         const extension = fileName.split('.').pop(); // Extraer la extensión
-
         // Nombre seguro del archivo
 
         const safeAttachmentFormName = path.basename(fileName).replace(/\s/g, "_");
-        const safeExtension = path.extname(`.${extension}`);
-        const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}${safeExtension}`;
+
+        const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}${extension}`;
 
         // Subir archivo a S3
         try {
             const urlFile = await uploadFileToS3(attachmentTreatmentType, folderName);
-
             // Save into database
-            saveUploadedFile(caseCreated.insertId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, safeExtension);
+            saveUploadedFile(caseCreated.insertId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, extension);
         } catch (error) {
             console.error("Error uploading to S3:", error);
             return next(createError("Failed to upload file", [error.message], req.traceId, req.originalUrl));
@@ -311,6 +309,7 @@ const addMessagesCase = async (req, res, next) => {
             id: messageDataResponse.id,
             caseId: messageDataResponse.case_id,
             systemUser: {
+                id: systemUser[0].id,
                 fullName: systemUser[0].fullname,
                 email: systemUser[0].email,
                 avatarUrl: systemUser[0].photo
@@ -369,6 +368,7 @@ const getMessageCases = async( req, res, next ) =>
                     id: item.id,
                     caseId: item.case_id,
                     systemUser: {
+                        id: systemUser[0].id,
                         fullName: systemUser[0].fullname,
                         email: systemUser[0].email,
                         avatarUrl: systemUser[0].photo
@@ -398,6 +398,16 @@ const getMessageCases = async( req, res, next ) =>
     } catch (error) {
         next(error)
     }
+}
+
+/**
+ * TODO get all files by case
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+const getFilesCases = async( req, res, next ) => {
+
 }
 
 /**
@@ -491,5 +501,6 @@ module.exports = {
     assignedCase,
     addMessagesCase,
     getCaseById,
-    getMessageCases
+    getMessageCases,
+    getFilesCases
 }
