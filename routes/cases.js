@@ -4,7 +4,7 @@ const { body, param } = require('express-validator');
 const multer = require('multer');
 const validateRequest = require('../middleware/validateRequest');
 
-const { getAllCases, createCase, updateUrlViewer, updateOrderNumber, assignedCase, uploadMultipleFiles, addMessagesCase, getCaseById, getMessageCases, getFilesCases } = require('../controllers/cases.controller');
+const { getAllCases, createCase, updateUrlViewer, updateOrderNumber, assignedCase, uploadMultipleFiles, addMessagesCase, getCaseById, getMessageCases, getFilesCases, deleteCase } = require('../controllers/cases.controller');
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -52,6 +52,10 @@ router.get('/getFilesCases/:id', [
     param("id").notEmpty().withMessage("Id is required"),
     validateRequest
 ], getFilesCases);
+router.delete('/deleteCase/:id', [
+    param("id").notEmpty().withMessage("Id is required"),
+    validateRequest
+], deleteCase)
 
 // router.post('/getAll', [
 //     body("name").notEmpty().withMessage("Name is required"),

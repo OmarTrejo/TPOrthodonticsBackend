@@ -6,6 +6,7 @@ const { systemLogs } = require('../utils/systemLogs');
 const path = require('path');
 const pool = require('../database/config');
 const createError = require('../utils/createError');
+const { recyclerBin } = require("../utils/recyclerbin");
 /**
  * TODO Get all cases for role
  * @param {*} req 
@@ -298,6 +299,9 @@ const addMessagesCase = async (req, res, next) => {
             return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
         }
 
+        // Update status from case
+        await pool.query('UPDATE cases SET status_case_id = ? WHERE id = ?', [caseStatusId, caseId]);
+
         // Guardar logs del sistema
         systemLogs(user_id, "New message add", result.insertId, MODULES.CASES);
 
@@ -537,6 +541,74 @@ const saveUploadedFile = async (caseId, urlS3, filename, size, extension) => {
     }
 }
 
+/**
+ * Delete a case
+ */
+
+const deleteCase = async (req, res, next) => {
+    const { id } = req.params;
+    const user_id = req.user.id;
+
+    try {
+        const [result] = await pool.query('UPDATE cases SET is_deleted = 1, status_case_id = ? WHERE id = ?', [STATUS_CASE.CANCELLED, id]);
+
+        if (result.affectedRows === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Guardar logs del sistema
+        systemLogs(user_id, "Case deleted", id, MODULES.CASES);
+
+        // Add row into recycler bin
+        recyclerBin(id, MODULES.CASES, user_id);
+
+        res.status(204).json();
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Delete file by id file
+const deleteFile = async (req, res, next) => {
+    const { id } = req.params;
+    const user_id = req.user.id;
+
+    try {
+        const [results] = 
+
+        res.status(204).json();
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * TODO Delete many cases
+ */
+const deleteManyCases = async (req, res, next) => {
+    const { ids } = req.body;
+    const user_id = req.user.id;
+
+    try {
+        const [result] = await pool.query('UPDATE cases SET is_deleted = 1, status_case_id = ? WHERE id IN (?)', [STATUS_CASE.CANCELLED, ids]);
+
+        if (result.affectedRows === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Guardar logs del sistema
+        ids.forEach((id) => {
+            systemLogs(user_id, "Case deleted", id, MODULES.CASES);
+            // Add row into recycler bin
+            recyclerBin(id, MODULES.CASES, user_id);
+        });
+
+        res.status(204).json();
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     getAllCases,
     createCase,
@@ -547,5 +619,7 @@ module.exports = {
     addMessagesCase,
     getCaseById,
     getMessageCases,
-    getFilesCases
+    getFilesCases,
+    deleteCase,
+    deleteManyCases
 }

@@ -40,6 +40,7 @@ const getMyAccount = async (req, res, next) => {
                     id: acl.module_id,
                     name: acl.module,
                     status: Boolean(acl.is_enabled),
+                    schemaName: acl.schemaName,
                     actions: []
                 });
             }
