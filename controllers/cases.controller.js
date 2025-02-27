@@ -138,7 +138,7 @@ const createCase = async (req, res, next) => {
 
         const safeAttachmentFormName = path.basename(fileName).replace(/\s/g, "_");
 
-        const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}${extension}`;
+        const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}`;
 
         // Subir archivo a S3
         try {
@@ -251,7 +251,7 @@ const uploadMultipleFiles = async (req, res, next) => {
             const attachmentFormSize = (file.size / (1024 * 1024)).toFixed(2);
             const safeAttachmentFormName = path.basename(file.originalname).replace(/\s/g, "_");
             const safeExtension = path.extname(file.originalname);
-            const folderName = `cases/${caseId}/${safeAttachmentFormName}${safeExtension}`;
+            const folderName = `cases/${caseId}/${safeAttachmentFormName}`;
 
             // Subir archivo a S3
             try {
