@@ -34,7 +34,7 @@ const getAllCases = async (req, res, next) => {
             const [treatmentType] = await pool.query('SELECT id, type_name FROM type_case WHERE id = ? LIMIT 1', [item.type_case_id]);
 
             // Get caseStatus
-            const [caseStatus] = await pool.query('SELECT id, status, span_color FROM status_case WHERE id = ? LIMIT 1', [item.status_case_id]);
+            const [caseStatus] = await pool.query('SELECT id, status, span_color, general FROM status_case WHERE id = ? LIMIT 1', [item.status_case_id]);
 
             // Get organization
             const [organization] = await pool.query('SELECT id, name FROM dc WHERE id = ? LIMIT 1', [item.organization_id]);
@@ -52,7 +52,7 @@ const getAllCases = async (req, res, next) => {
                 if (rows.length > 0) {
                     tech = {
                         id: rows[0].id,
-                        fullname: rows[0].fullname,
+                        fullName: rows[0].fullname,
                         email: rows[0].email
                     };
                 }
@@ -62,16 +62,27 @@ const getAllCases = async (req, res, next) => {
                 id: item.id,
                 name: item.name,
                 patientName: item.patient_name,
-                caseStatus: caseStatus[0],
+                caseStatus: {
+                    id: caseStatus[0].id,
+                    name: caseStatus[0].status,
+                    color: caseStatus[0].span_color,
+                    general: caseStatus[0].general,
+                },
                 additionalInfo: item.observations,
                 generalComments: item.general_comments,
                 technicalSpecifications: item.tech_observations,
                 orderNumber: item.order_number,
                 viewerUrl: item.url_viewer,
                 isDeleted: Boolean(item.is_deleted),
-                treatmentType: treatmentType[0],
+                treatmentType: {
+                    name: treatmentType[0].type_name,
+                    id: treatmentType[0].id
+                },
                 organization: organization[0],
-                doctor: doctor[0],
+                doctor: {
+                    id: doctor[0].id,
+                    fullName: doctor[0].fullname
+                },
                 tech,
                 createdOn: formattedDate(item.created_at)
             };
@@ -473,7 +484,7 @@ const getCaseById = async (req, res, next) => {
             if (rows.length > 0) {
                 tech = {
                     id: rows[0].id,
-                    fullname: rows[0].fullname,
+                    fullName: rows[0].fullname,
                     email: rows[0].email
                 };
             }
@@ -483,17 +494,28 @@ const getCaseById = async (req, res, next) => {
             id: caseData.id,
             name: caseData.name,
             patientName: caseData.patient_name,
-            caseStatus: caseStatus[0],
+            caseStatus:  {
+                id: caseStatus[0].id,
+                name: caseStatus[0].status,
+                color: caseStatus[0].span_color,
+                general: caseStatus[0].general,
+            },
             additionalInfo: caseData.observations,
             generalComments: caseData.general_comments,
             technicalSpecifications: caseData.tech_observations,
             orderNumber: caseData.order_number,
             viewerUrl: caseData.url_viewer,
             isDeleted: Boolean(caseData.is_deleted),
-            treatmentType: treatmentType[0],
+            treatmentType: {
+                name: treatmentType[0].type_name,
+                id: treatmentType[0].id
+            },
             organization: organization[0],
-            doctor: doctor[0],
-            tech: tech[0],
+            doctor: {
+                id: doctor[0].id,
+                fullName: doctor[0].fullname
+            },
+            tech,
             createdOn: formattedDate(caseData.created_at)
         };
 
