@@ -49,7 +49,7 @@ const getAllCases = async (req, res, next) => {
             if (item.tech_id > 0) {
                 const [rows] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [item.tech_id]);
 
-                if(rows.length > 0){
+                if (rows.length > 0) {
                     tech = {
                         id: rows[0].id,
                         fullname: rows[0].fullname,
@@ -293,8 +293,7 @@ const addMessagesCase = async (req, res, next) => {
         // Get data from message
         const [messageData] = await pool.query('SELECT * FROM messages_case WHERE id = ? LIMIT 1', [result.insertId]);
 
-        if(messageData.length === 0)
-        {
+        if (messageData.length === 0) {
             return next(createError("Error, please try again later", ["Error to get data from message"], req.traceId, req.originalUrl));
         }
 
@@ -330,15 +329,13 @@ const addMessagesCase = async (req, res, next) => {
     }
 }
 
-
 /**
  * TODO get All messages for case
  * @param {*} req 
  * @param {*} res 
  * @param {*} next 
  */
-const getMessageCases = async( req, res, next ) => 
-{   
+const getMessageCases = async (req, res, next) => {
     const { page, pageSize, ...filters } = req.query;
 
     try {
@@ -363,7 +360,7 @@ const getMessageCases = async( req, res, next ) =>
                 const [systemUser] = await pool.query('SELECT id, fullname, email, photo FROM users WHERE id = ? LIMIT 1', [item.user_id]);
                 // Get caseStatus
                 const [caseStatus] = await pool.query('SELECT id, status, span_color, general FROM status_case WHERE id = ? LIMIT 1', [item.status_case_id]);
-    
+
                 return {
                     id: item.id,
                     caseId: item.case_id,
@@ -382,9 +379,9 @@ const getMessageCases = async( req, res, next ) =>
                     },
                     createdOn: formattedDate(item.created_at)
                 };
-    
-    
-                
+
+
+
             })
         );
 
@@ -406,8 +403,34 @@ const getMessageCases = async( req, res, next ) =>
  * @param {*} res 
  * @param {*} next 
  */
-const getFilesCases = async( req, res, next ) => {
+const getFilesCases = async (req, res, next) => {
+    const { id } = req.params;
+    const user_id = req.user.id;
 
+    try {
+        // Get files by id
+        const [results] = await pool.query('SELECT * FROM vw_files_cases WHERE case_id = ?', [id]);
+
+        if (results.length === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        const filteredResponse = results.map((item) => {
+                return {
+                    id: item.id,
+                    url: item.url_file,
+                    name: item.file_name,
+                    size: item.size,
+                    extension: item.extension,
+                    uploadedDate: formattedDate(item.created_at),
+                    caseId: item.case_id,
+                };
+            });
+
+        res.status(200).json(filteredResponse);
+    } catch (error) {
+        next(error);
+    }
 }
 
 /**
@@ -447,14 +470,14 @@ const getCaseById = async (req, res, next) => {
         // Validated if have a tech assigned
         if (caseData.tech_id > 0) {
             const [rows] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [caseData.tech_id]);
-            if(rows.length > 0){
+            if (rows.length > 0) {
                 tech = {
                     id: rows[0].id,
                     fullname: rows[0].fullname,
                     email: rows[0].email
                 };
             }
-        }        
+        }
 
         const filteredResponse = {
             id: caseData.id,
