@@ -1,7 +1,10 @@
 const { formattedDate } = require("../utils/dates");
 const { paginateQuery } = require('../utils/pagination');
+const { STATUS_CASE, MODULES } = require("../utils/constants");
+const { uploadFileToS3 } = require("../utils/aws");
+const { systemLogs } = require('../utils/systemLogs');
+const path = require('path');
 const pool = require('../database/config');
-const { STATUS_CASE } = require("../utils/constants");
 /**
  * TODO Get all cases for role
  * @param {*} req 
@@ -79,40 +82,234 @@ const getAllCases = async (req, res, next) =>
     }
 }
 
-const createCase = async (req, res, next) =>
-{
-    const { name, patientName, additionalInfo, generalComments, technicalSpecifications, attachmentFormName, attachmentFormExtension, attachmentFormBase64, treatmentTypeId  } = req.body;
-    const user_id = req.user.id; // Doctor
-
+const createCase = async (req, res, next) => {
     try {
+        const { name, patientName, additionalInfo, generalComments, technicalSpecifications, attachmentFormName, attachmentFormExtension, treatmentTypeId } = req.body;
+        const user_id = req.user.id; // Doctor
 
-        // Get user
-        const [user] = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user_id]);
-
-        const [caseCreated] = await pool.query('INSERT INTO cases (name, patient_name, observations, general_comments, tech_observations,  treatment_type_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]);
-
-        if (result.affectedRows === 0) {
-            const error = createError(
-                "Error, please try again later", // Mensaje de error
-                ["Error connection to database"], // Detalles
-                req.traceId, // TraceId (si lo tienes)
-                req.originalUrl // URL de la solicitud
-            );
-            return next(error); // Pasa el error al middleware de manejo de errores
+        if (!name || !patientName || !treatmentTypeId) {
+            return next(createError("Required fields are missing", ["name are missing", "patient name are missing", "treatmentTypeId are missing"], req.traceId, req.originalUrl));
         }
 
-        // Save a logs
-        systemLogs(user_id, "New row inserted", result.insertId, MODULES.COUNTRIES)
+        // Validar archivo
+        if (!req.file) {
+            return next(createError("Error, file is required", ["Database connection error"], req.traceId, req.originalUrl));
+        }
 
-        res.status(201).json({message: 'Create case successfully'});
+        const [user] = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user_id]);
 
+        const [caseCreated] = await pool.query(
+            'INSERT INTO cases (name, patient_name, observations, general_comments, tech_observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]
+        );
+
+        if (caseCreated.affectedRows === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Convertir archivo a base64
+        const attachmentFormBase64 = req.file.buffer.toString('base64');
+
+        // Convert size to MB
+        const attachmentFormSize = (req.file.size / (1024 * 1024)).toFixed(2);
+
+        // Nombre seguro del archivo
         
+        const safeAttachmentFormName = path.basename(attachmentFormName).replace(/\s/g, "_");
+        const safeExtension = path.extname(`.${attachmentFormExtension}`);
+        const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}${safeExtension}`;
+
+        // Subir archivo a S3
+        try {
+            const urlFile = await uploadFileToS3(attachmentFormBase64, folderName);
+
+            // Save into database
+            saveUploadedFile(caseCreated.insertId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, safeExtension);
+        } catch (error) {
+            console.error("Error uploading to S3:", error);
+            return next(createError("Failed to upload file", [error.message], req.traceId, req.originalUrl));
+        }
+
+        // Guardar logs del sistema
+        systemLogs(user_id, "New row inserted", caseCreated.insertId, MODULES.CASES);
+
+        res.status(201).json({ message: 'Create case successfully' });
+
     } catch (error) {
-        next(error)
+        next(error);
+    }
+};
+
+/**
+ * TODO update only the URL viewer for tech
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+const updateUrlViewer = async(req, res, next) => 
+{
+    const { id } = req.params;
+    const { urlViewer } = req.body;
+    const user_id = req.user.id;
+
+    try {
+        // Update case with id
+        const [result] = await pool.query('UPDATE cases SET url_viewer = ? WHERE id = ?', [urlViewer, id]);
+        if (result.affectedRows === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Guardar logs del sistema
+        systemLogs(user_id, "Row updated add URL Viewer", id, MODULES.CASES);
+
+        res.status(200).json({ message: 'Update case successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * TODO update only the order number 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+const updateOrderNumber = async(req, res, next) =>
+{
+    const { id } = req.params;
+    const { orderNumber } = req.body;
+    const user_id = req.user.id;
+
+    try {
+        // Update case with id
+        const [result] = await pool.query('UPDATE cases SET order_number = ? WHERE id = ?', [orderNumber, id]);
+        if (result.affectedRows === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Guardar logs del sistema
+        systemLogs(user_id, "Row updated add Order Number", id, MODULES.CASES);
+
+        res.status(200).json({ message: 'Update case successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+const assignedCase = async(req, res, next) =>
+{
+    const { id } = req.params;
+    const techId = req.user.id;
+
+    try {
+        // Update case with id
+        const [result] = await pool.query('UPDATE cases SET tech_id = ? WHERE id = ?', [techId, id]);
+        if (result.affectedRows === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Guardar logs del sistema
+        systemLogs(techId, "Row updated add Tech", id, MODULES.CASES);
+
+        res.status(200).json({ message: 'Update case successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+const uploadMultipleFiles = async( req, res, next) => 
+{   
+    const { caseId } = req.body;
+    const user_id = req.user.id;
+
+    try {
+        // Validar archivos
+        if (!req.files) {
+            return next(createError("Error, files is required", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Iterar sobre los archivos
+        for (const file of req.files) {
+            const attachmentFormBase64 = file.buffer.toString('base64');
+            const attachmentFormSize = (file.size / (1024 * 1024)).toFixed(2);
+            const safeAttachmentFormName = path.basename(file.originalname).replace(/\s/g, "_");
+            const safeExtension = path.extname(file.originalname);
+            const folderName = `cases/${caseId}/${safeAttachmentFormName}${safeExtension}`;
+
+            // Subir archivo a S3
+            try {
+                const urlFile = await uploadFileToS3(attachmentFormBase64, folderName);
+
+                // Save into database
+                saveUploadedFile(caseId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, safeExtension);
+               
+            } catch (error) {
+                console.error("Error uploading to S3:", error);
+                return next(createError("Failed to upload file", [error.message], req.traceId, req.originalUrl));
+            }
+        }
+
+        // System logs
+        systemLogs(user_id, "File add into case", caseId, MODULES.CASES);
+
+        // Response
+        res.status(201).json({ message: 'Files uploaded successfully' });
+
+    }
+    catch (error) {
+        next(error);
+    } 
+}
+
+/**
+ * TODO Add messages case
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+const addMessagesCase = async(req, res, next) => {
+    const { caseStatusId, message, caseId } = req.body;
+    const user_id = req.user.id;
+
+    try {
+        const [ result ] = await pool.query(
+            'INSERT INTO messages_case (case_id, user_id, status_case_id, message) VALUES (?, ?, ?, ?)',
+            [caseId, user_id, caseStatusId, message]
+        );
+
+        if (result.affectedRows === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Guardar logs del sistema
+        systemLogs(user_id, "New message add", result.insertId, MODULES.CASES);
+
+        res.status(201).json({ message: 'Message add successfully' });  
+    } catch (error) {
+        next(error);
+    }
+}
+
+const saveUploadedFile = async(caseId, urlS3, filename, size, extension) =>
+{   
+    try {
+        const [result] = await pool.query(
+            'INSERT INTO files_cases (case_id, url_file, file_name, size, extension) VALUES (?, ?, ?, ?, ?)',
+            [caseId, urlS3, filename, size, extension]
+        );
+        return result.insertId;
+    } catch (error) {
+        throw(error);
     }
 }
 
 module.exports = {
     getAllCases,
-    createCase
+    createCase,
+    updateUrlViewer,
+    updateOrderNumber,
+    uploadMultipleFiles,
+    assignedCase,
+    addMessagesCase
 }

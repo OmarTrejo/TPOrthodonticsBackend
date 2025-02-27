@@ -27,7 +27,29 @@ const uploadImageToS3 = async (base64Data, username, imageType) => {
         throw error;
     }
 };
+/**
+ * Add a new file in AWS from Case
+ */
+const uploadFileToS3 = async (base64Data, key) => {
+    const params = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: `${key}`,
+        Body: base64Data,
+        ContentEncoding: 'base64',
+    };
+
+    const command = new PutObjectCommand(params);
+
+    try {
+        await s3Client.send(command);
+        return `https://${params.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
+    } catch (error) {
+        console.error("Error uploading to S3:", error);
+        throw error;
+    }
+};
 
 module.exports = {
     uploadImageToS3,
+    uploadFileToS3
 };

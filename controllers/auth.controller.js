@@ -70,6 +70,40 @@ const login = async (req, res, next) => {
         // Consultar los modulos del role
         const [acls] = await pool.query('SELECT * FROM vw_access_control_list WHERE role_id = ?', [user.role_id]);
 
+        let organization = {
+            id: null,
+            name: null,
+            commonName: null,
+            state: null,
+            city: null,
+            address: null,
+            status: null,
+            country: {
+                id: null,
+                name: null,
+                isoCode: null
+            }
+        }
+        
+        // Validate country exist
+        if (countrydc.length != 0) {
+            organization = {
+                id: countrydc[0].id,
+                name: countrydc[0].name,
+                commonName: countrydc[0].commun_name,
+                state: countrydc[0].state_province,
+                city: countrydc[0].city,
+                address: countrydc[0].address,
+                status: Boolean(countrydc[0].status),
+                country: {
+                    id: countrydc[0].id_country,
+                    name: countrydc[0].country,
+                    isoCode: countrydc[0].iso
+                }
+            }
+        }
+
+
         // Construir la estructura de módulos y acciones
         const modulesMap = new Map();
 
@@ -114,16 +148,16 @@ const login = async (req, res, next) => {
                 },
                 organization: {
                     id: user.dc_id,
-                    name: countrydc[0].name,
-                    commonName: countrydc[0].commun_name,
-                    state: countrydc[0].state_province,
-                    city: countrydc[0].city,
-                    address: countrydc[0].address,
-                    status: Boolean(countrydc[0].status),
+                    name: organization.name,
+                    commonName: organization.commun_name,
+                    state: organization.state_province,
+                    city: organization.city,
+                    address: organization.address,
+                    status: Boolean(organization.status),
                     country: {
-                        id: countrydc[0].id_country,
-                        name: countrydc[0].country,
-                        isoCode: countrydc[0].iso
+                        id: organization.id_country,
+                        name: organization.country,
+                        isoCode: organization.iso
                     }
                 }
             }
