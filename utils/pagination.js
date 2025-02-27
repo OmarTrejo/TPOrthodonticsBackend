@@ -19,33 +19,36 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
 
         const offset = (page - 1) * pageSize;
         let whereClause = '';
-        const filterValues = [];
+        
+        // Arreglos separados para AND y OR
+        let strictConditions = [];  // Para `is_deleted` y `userId`
+        let flexibleConditions = []; // Para los demás filtros
+        let filterValuesStrict = [];
+        let filterValuesFlexible = [];
 
         if (filters && Object.keys(filters).length > 0) {
-            const filterConditions = Object.keys(filters).map((key) => {
-                if (key === 'is_deleted') {
-                    filterValues.push(filters[key]);
-                    return `${key} = ?`;
-                } else if (key === 'userId') {
-                    // Si el filtro incluye user_id, excluimos ese usuario
-                    filterValues.push(filters[key]);
-                    return `${key} != ?`;
-                } else {
-                    filterValues.push(`%${filters[key]}%`);
-                    return `${key} LIKE ?`;
+            if (filters.hasOwnProperty('is_deleted')) {
+                strictConditions.push("is_deleted = ?");
+                filterValuesStrict.push(filters.is_deleted);
+            }
+            if (filters.hasOwnProperty('userId')) {
+                strictConditions.push("userId != ?");
+                filterValuesStrict.push(filters.userId);
+            }
+
+            Object.keys(filters).forEach((key) => {
+                if (key !== 'is_deleted' && key !== 'userId') {
+                    flexibleConditions.push(`${key} LIKE ?`);
+                    filterValuesFlexible.push(`%${filters[key]}%`);
                 }
             });
 
-            if (filters.hasOwnProperty('is_deleted')) {
-                const otherConditions = filterConditions.filter(cond => !cond.startsWith('is_deleted'));
-
-                if (otherConditions.length > 0) {
-                    whereClause = ` WHERE is_deleted = ? AND (${otherConditions.join(' OR ')})`;
-                } else {
-                    whereClause = ` WHERE is_deleted = ?`;
-                }
-            } else {
-                whereClause = ` WHERE ${filterConditions.join(' OR ')}`;
+            if (strictConditions.length > 0 && flexibleConditions.length > 0) {
+                whereClause = ` WHERE (${strictConditions.join(' AND ')}) AND (${flexibleConditions.join(' OR ')})`;
+            } else if (strictConditions.length > 0) {
+                whereClause = ` WHERE ${strictConditions.join(' AND ')}`;
+            } else if (flexibleConditions.length > 0) {
+                whereClause = ` WHERE ${flexibleConditions.join(' OR ')}`;
             }
         }
 
@@ -58,19 +61,22 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
             orderByClause = ` ORDER BY ${orderBy.column} ${orderBy.direction}`;
         }
 
-        console.log(`${baseQuery}${whereClause}${orderByClause} LIMIT ? OFFSET ?`, [...filterValues, pageSize, offset]);
+        // Se concatenan los valores en el orden correcto
+        const finalFilterValues = [...filterValuesStrict, ...filterValuesFlexible, pageSize, offset];
+
+        console.log(`${baseQuery}${whereClause}${orderByClause} LIMIT ? OFFSET ?`, finalFilterValues);
 
         const [rows] = await pool.query(
             `${baseQuery}${whereClause}${orderByClause} LIMIT ? OFFSET ?`,
-            [...filterValues, pageSize, offset]
+            finalFilterValues
         );
 
         const [totalRows] = await pool.query(
             `${countQuery}${whereClause}`,
-            filterValues
+            [...filterValuesStrict, ...filterValuesFlexible]
         );
-        const total = totalRows[0].total;
 
+        const total = totalRows[0]?.total || 0;
         const pageCount = Math.ceil(total / pageSize);
 
         return {
@@ -83,6 +89,8 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
     } catch (error) {
         throw error;
     }
-}
+};
+
+
 
 module.exports = { paginateQuery };
