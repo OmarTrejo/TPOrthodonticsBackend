@@ -132,7 +132,7 @@ const login = async (req, res, next) => {
         const response = {
             token: token,
             systemUser: {
-                id: user.id,
+                id: user.userId,
                 fullName: user.fullname,
                 email: user.email,
                 phoneNumber: user.phone_number,
@@ -284,7 +284,7 @@ const forgotPassword = async( req, res, next) => {
         const passwordEncrypted = await encryptPassword(tempPassword);
 
         // Update user password
-        await pool.query('UPDATE users SET password = ?, recovery_password = 1, mfa_enabled = 0, token_verification=? WHERE id = ?', [passwordEncrypted, token, user.id]);
+        await pool.query('UPDATE users SET password = ?, recovery_password = 1, mfa_enabled = 0, token_verification=? WHERE id = ?', [passwordEncrypted, token, user.userId]);
 
         // Send email notification
         sendEmailForgotPassword(email, user.fullname, tempPassword, token)

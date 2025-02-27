@@ -26,7 +26,7 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
                 if (key === 'is_deleted') {
                     filterValues.push(filters[key]);
                     return `${key} = ?`;
-                } else if (key === 'id') {
+                } else if (key === 'userId') {
                     // Si el filtro incluye user_id, excluimos ese usuario
                     filterValues.push(filters[key]);
                     return `${key} != ?`;

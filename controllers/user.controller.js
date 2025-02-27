@@ -69,7 +69,7 @@ const getUsers = async (req, res, next) => {
         const countQuery = "SELECT COUNT(*) AS total FROM vw_users";
 
         // Obtener datos paginados
-        const paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, id:user_id}, validatedPage, validatedPageSize);
+        const paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, userId:user_id}, validatedPage, validatedPageSize);
 
         // Formatear los resultados
         const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
@@ -77,7 +77,7 @@ const getUsers = async (req, res, next) => {
             const country = await getCountry(item.dc_id);
 
             return {
-                id: item.id,
+                id: item.userId,
                 fullName: item.fullname,
                 email: item.email,
                 phoneNumber: item.phone_number,
@@ -125,7 +125,7 @@ const getUserById = async (req, res, next) => {
         const role = await getRole(rows[0].role_id);
         const country = await getCountry(rows[0].dc_id);
         const response = {
-            id: rows[0].id,
+            id: rows[0].userId,
             fullName: rows[0].fullname,
             email: rows[0].email,
             phoneNumber: rows[0].phone_number,

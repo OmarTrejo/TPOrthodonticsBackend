@@ -5,14 +5,14 @@ const { uploadFileToS3 } = require("../utils/aws");
 const { systemLogs } = require('../utils/systemLogs');
 const path = require('path');
 const pool = require('../database/config');
+const createError = require('../utils/createError');
 /**
  * TODO Get all cases for role
  * @param {*} req 
  * @param {*} res 
  * @param {*} next 
  */
-const getAllCases = async (req, res, next) => 
-{
+const getAllCases = async (req, res, next) => {
     const { page, pageSize, ...filters } = req.query;
 
     try {
@@ -42,13 +42,21 @@ const getAllCases = async (req, res, next) =>
             // Get doctor
             const [doctor] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [item.customer_id]);
 
-            // Validated if have a tech assigned
-            if(!item.tech_id){
-                const [tech] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [item.tech_id]);
-            }
-            
             // Get tech
-            const tech = { id: null, fullname: null, email: null };
+            let tech = { id: null, fullname: null, email: null };
+
+            // Validated if have a tech assigned
+            if (item.tech_id > 0) {
+                const [rows] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [item.tech_id]);
+
+                if(rows.length > 0){
+                    tech = {
+                        id: rows[0].id,
+                        fullname: rows[0].fullname,
+                        email: rows[0].email
+                    };
+                }
+            }
 
             return {
                 id: item.id,
@@ -68,7 +76,7 @@ const getAllCases = async (req, res, next) =>
                 createdOn: formattedDate(item.created_at)
             };
         })
-    );
+        );
 
         // Construir la respuesta
         const response = {
@@ -114,7 +122,7 @@ const createCase = async (req, res, next) => {
         const attachmentFormSize = (req.file.size / (1024 * 1024)).toFixed(2);
 
         // Nombre seguro del archivo
-        
+
         const safeAttachmentFormName = path.basename(attachmentFormName).replace(/\s/g, "_");
         const safeExtension = path.extname(`.${attachmentFormExtension}`);
         const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}${safeExtension}`;
@@ -146,8 +154,7 @@ const createCase = async (req, res, next) => {
  * @param {*} res 
  * @param {*} next 
  */
-const updateUrlViewer = async(req, res, next) => 
-{
+const updateUrlViewer = async (req, res, next) => {
     const { id } = req.params;
     const { urlViewer } = req.body;
     const user_id = req.user.id;
@@ -175,8 +182,7 @@ const updateUrlViewer = async(req, res, next) =>
  * @param {*} next 
  * @returns 
  */
-const updateOrderNumber = async(req, res, next) =>
-{
+const updateOrderNumber = async (req, res, next) => {
     const { id } = req.params;
     const { orderNumber } = req.body;
     const user_id = req.user.id;
@@ -197,14 +203,13 @@ const updateOrderNumber = async(req, res, next) =>
     }
 }
 
-const assignedCase = async(req, res, next) =>
-{
+const assignedCase = async (req, res, next) => {
     const { id } = req.params;
     const techId = req.user.id;
 
     try {
         // Update case with id
-        const [result] = await pool.query('UPDATE cases SET tech_id = ? WHERE id = ?', [techId, id]);
+        const [result] = await pool.query('UPDATE cases SET tech_id = ?, status_case_id = ? WHERE id = ?', [techId, STATUS_CASE.IN_PROGRESS, id]);
         if (result.affectedRows === 0) {
             return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
         }
@@ -218,8 +223,7 @@ const assignedCase = async(req, res, next) =>
     }
 }
 
-const uploadMultipleFiles = async( req, res, next) => 
-{   
+const uploadMultipleFiles = async (req, res, next) => {
     const { caseId } = req.body;
     const user_id = req.user.id;
 
@@ -243,7 +247,7 @@ const uploadMultipleFiles = async( req, res, next) =>
 
                 // Save into database
                 saveUploadedFile(caseId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, safeExtension);
-               
+
             } catch (error) {
                 console.error("Error uploading to S3:", error);
                 return next(createError("Failed to upload file", [error.message], req.traceId, req.originalUrl));
@@ -259,7 +263,7 @@ const uploadMultipleFiles = async( req, res, next) =>
     }
     catch (error) {
         next(error);
-    } 
+    }
 }
 
 /**
@@ -268,12 +272,12 @@ const uploadMultipleFiles = async( req, res, next) =>
  * @param {*} res 
  * @param {*} next 
  */
-const addMessagesCase = async(req, res, next) => {
+const addMessagesCase = async (req, res, next) => {
     const { caseStatusId, message, caseId } = req.body;
     const user_id = req.user.id;
 
     try {
-        const [ result ] = await pool.query(
+        const [result] = await pool.query(
             'INSERT INTO messages_case (case_id, user_id, status_case_id, message) VALUES (?, ?, ?, ?)',
             [caseId, user_id, caseStatusId, message]
         );
@@ -285,14 +289,83 @@ const addMessagesCase = async(req, res, next) => {
         // Guardar logs del sistema
         systemLogs(user_id, "New message add", result.insertId, MODULES.CASES);
 
-        res.status(201).json({ message: 'Message add successfully' });  
+        res.status(201).json({ message: 'Message add successfully' });
     } catch (error) {
         next(error);
     }
 }
 
-const saveUploadedFile = async(caseId, urlS3, filename, size, extension) =>
-{   
+/**
+ * TODO get case by Id
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+const getCaseById = async (req, res, next) => {
+    const { id } = req.params;
+
+    try {
+        const [result] = await pool.query('SELECT * FROM vw_cases WHERE id = ? LIMIT 1', [id]);
+
+        if (result.length === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        const caseData = result[0];
+
+        // Get treatmentType
+        const [treatmentType] = await pool.query('SELECT id, type_name FROM type_case WHERE id = ? LIMIT 1', [caseData.type_case_id]);
+
+        // Get caseStatus
+        const [caseStatus] = await pool.query('SELECT id, status, span_color FROM status_case WHERE id = ? LIMIT 1', [caseData.status_case_id]);
+
+        // Get organization
+        const [organization] = await pool.query('SELECT id, name FROM dc WHERE id = ? LIMIT 1', [caseData.organization_id]);
+
+        // Get doctor
+        const [doctor] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [caseData.customer_id]);
+
+        // Get tech
+        let tech = { id: null, fullname: null, email: null };
+
+        // Validated if have a tech assigned
+        if (caseData.tech_id > 0) {
+            const [rows] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [caseData.tech_id]);
+            if(rows.length > 0){
+                tech = {
+                    id: rows[0].id,
+                    fullname: rows[0].fullname,
+                    email: rows[0].email
+                };
+            }
+        }        
+
+        const filteredResponse = {
+            id: caseData.id,
+            name: caseData.name,
+            patientName: caseData.patient_name,
+            caseStatus,
+            additionalInfo: caseData.observations,
+            generalComments: caseData.general_comments,
+            technicalSpecifications: caseData.tech_observations,
+            orderNumber: caseData.order_number,
+            viewerUrl: caseData.url_viewer,
+            isDeleted: Boolean(caseData.is_deleted),
+            treatmentType,
+            organization,
+            doctor,
+            tech,
+            createdOn: formattedDate(caseData.created_at)
+        };
+
+        res.status(200).json(filteredResponse);
+    } catch (error) {
+        next(error);
+    }
+}
+
+const saveUploadedFile = async (caseId, urlS3, filename, size, extension) => {
     try {
         const [result] = await pool.query(
             'INSERT INTO files_cases (case_id, url_file, file_name, size, extension) VALUES (?, ?, ?, ?, ?)',
@@ -300,7 +373,7 @@ const saveUploadedFile = async(caseId, urlS3, filename, size, extension) =>
         );
         return result.insertId;
     } catch (error) {
-        throw(error);
+        throw (error);
     }
 }
 
@@ -311,5 +384,6 @@ module.exports = {
     updateOrderNumber,
     uploadMultipleFiles,
     assignedCase,
-    addMessagesCase
+    addMessagesCase,
+    getCaseById
 }

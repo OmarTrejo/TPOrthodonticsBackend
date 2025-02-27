@@ -58,7 +58,7 @@ const getMyAccount = async (req, res, next) => {
         const notifications = conf[0];
 
         const response = {
-            id: user.id,
+            id: user.userId,
             fullName: user.fullname,
             email: user.email,
             phoneNumber: user.phone_number,
