@@ -483,17 +483,17 @@ const getCaseById = async (req, res, next) => {
             id: caseData.id,
             name: caseData.name,
             patientName: caseData.patient_name,
-            caseStatus,
+            caseStatus: caseStatus[0],
             additionalInfo: caseData.observations,
             generalComments: caseData.general_comments,
             technicalSpecifications: caseData.tech_observations,
             orderNumber: caseData.order_number,
             viewerUrl: caseData.url_viewer,
             isDeleted: Boolean(caseData.is_deleted),
-            treatmentType,
-            organization,
-            doctor,
-            tech,
+            treatmentType: treatmentType[0],
+            organization: organization[0],
+            doctor: doctor[0],
+            tech: tech[0],
             createdOn: formattedDate(caseData.created_at)
         };
 
