@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
@@ -49,7 +49,35 @@ const uploadFileToS3 = async (base64Data, key) => {
     }
 };
 
+const deleteFileFromS3 = async (fileUrl) => {
+    try {
+      const bucketName = process.env.AWS_BUCKET_NAME; // Cambia esto por el nombre de tu bucket
+  
+      // Extraer la "key" del archivo desde la URL
+      const fileKey = fileUrl.split(`${bucketName}/`)[1];
+
+      console.log(fileKey);
+  
+      if (!fileKey) {
+        throw new Error("No se pudo extraer la key del archivo.");
+      }
+  
+      // Configurar los parámetros de eliminación
+      const params = {
+        Bucket: bucketName,
+        Key: fileKey
+      };
+  
+      // Ejecutar la eliminación
+      await s3Client.send(new DeleteObjectCommand(params));
+      console.log(`Archivo eliminado: ${fileKey}`);
+    } catch (error) {
+      console.error("Error eliminando el archivo:", error);
+    }
+  };
+
 module.exports = {
     uploadImageToS3,
-    uploadFileToS3
+    uploadFileToS3,
+    deleteFileFromS3
 };

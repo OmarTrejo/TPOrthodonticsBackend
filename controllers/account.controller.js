@@ -40,7 +40,7 @@ const getMyAccount = async (req, res, next) => {
                     id: acl.module_id,
                     name: acl.module,
                     status: Boolean(acl.is_enabled),
-                    schemaName: acl.acSchemaName,
+                    schemaName: acl.schemaName,
                     actions: []
                 });
             }
@@ -50,7 +50,7 @@ const getMyAccount = async (req, res, next) => {
             module.actions.push({
                 id: acl.action_id,
                 name: acl.action_name,
-                schemaName: acl.schemaName,
+                schemaName: acl.acSchemaName,
                 enabled: Boolean(acl.is_enabled) // Asumimos que todas las acciones están habilitadas
             });
         }

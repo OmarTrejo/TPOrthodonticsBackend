@@ -1,7 +1,7 @@
 const { formattedDate } = require("../utils/dates");
 const { paginateQuery } = require('../utils/pagination');
 const { STATUS_CASE, MODULES } = require("../utils/constants");
-const { uploadFileToS3 } = require("../utils/aws");
+const { uploadFileToS3, deleteFileFromS3 } = require("../utils/aws");
 const { systemLogs } = require('../utils/systemLogs');
 const path = require('path');
 const pool = require('../database/config');
@@ -575,7 +575,22 @@ const deleteFile = async (req, res, next) => {
     const user_id = req.user.id;
 
     try {
-        const [results] = 
+        const [results] = await pool.query('UPDATE files_cases SET status = 0 WHERE id = ? ', [id]);
+
+        if (results.affectedRows === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Guardar logs del sistema
+        systemLogs(user_id, "File deleted", id, MODULES.CASES);
+
+        // Get url from file
+        const [fileData] = await pool.query('SELECT url_file FROM files_cases WHERE id = ? LIMIT 1', [id]);
+        // Get file name
+        const URLFile = fileData[0].url_file;
+        console.log(URLFile);
+        // Delete file from s3
+        await deleteFileFromS3(URLFile);
 
         res.status(204).json();
     } catch (error) {
@@ -622,5 +637,6 @@ module.exports = {
     getMessageCases,
     getFilesCases,
     deleteCase,
-    deleteManyCases
+    deleteManyCases,
+    deleteFile
 }
