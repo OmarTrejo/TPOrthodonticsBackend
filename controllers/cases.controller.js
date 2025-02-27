@@ -352,6 +352,7 @@ const addMessagesCase = async (req, res, next) => {
  */
 const getMessageCases = async (req, res, next) => {
     const { page, pageSize, ...filters } = req.query;
+    const { id } = req.params;
 
     try {
         // Conversión y validación
@@ -366,7 +367,7 @@ const getMessageCases = async (req, res, next) => {
         const orderBy = { column: 'created_at', direction: 'DESC' };
 
         // Obtener datos paginados
-        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize, orderBy);
+        const paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, case_id: id }, validatedPage, validatedPageSize, orderBy);
 
         // Formatear los resultados
         const filteredResponse = await Promise.all(
