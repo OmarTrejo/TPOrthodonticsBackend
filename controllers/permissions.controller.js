@@ -12,7 +12,7 @@ const getAllPermissions = async (req, res, next) => {
         const filteredResponse = await Promise.all(roles.map(async (role) => {
 
             // Consultar los modulos del role
-            const [acls] = await pool.query('SELECT * FROM vw_access_control_list WHERE role_id = ?', [role.id]);
+            const [acls] = await pool.query(`SELECT * FROM vw_access_control_list WHERE role_id = ? ORDER BY position ASC`, [role.id]);
 
             // Construir la estructura de módulos y acciones
             const modulesMap = new Map();
