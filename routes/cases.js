@@ -4,13 +4,13 @@ const { body, param } = require('express-validator');
 const multer = require('multer');
 const validateRequest = require('../middleware/validateRequest');
 
-const { getAllCases, createCase, updateUrlViewer, updateOrderNumber, assignedCase, uploadMultipleFiles, addMessagesCase, getCaseById } = require('../controllers/cases.controller');
+const { getAllCases, createCase, updateUrlViewer, updateOrderNumber, assignedCase, uploadMultipleFiles, addMessagesCase, getCaseById, getMessageCases } = require('../controllers/cases.controller');
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/getAll', getAllCases );
-router.post('/addCase', upload.single('attachmentFormBase64'), [
+router.post('/addCase', upload.single('attachmentTreatmentType'), [
     body("name").notEmpty().withMessage("Name is required"),
     body("patientName").notEmpty().withMessage("Patient name is required"),
     body("treatmentTypeId").notEmpty().withMessage("Treatment Type is required"),
@@ -44,6 +44,10 @@ router.get('/getCaseById/:id',[
     param("id").notEmpty().withMessage("Id is required"),
     validateRequest
 ], getCaseById)
+router.get('/getMessageCases/:id', [
+    param("id").notEmpty().withMessage("Id is required"),
+    validateRequest
+], getMessageCases)
 
 // router.post('/getAll', [
 //     body("name").notEmpty().withMessage("Name is required"),

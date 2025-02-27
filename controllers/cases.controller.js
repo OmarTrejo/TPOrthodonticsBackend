@@ -92,7 +92,7 @@ const getAllCases = async (req, res, next) => {
 
 const createCase = async (req, res, next) => {
     try {
-        const { name, patientName, additionalInfo, generalComments, technicalSpecifications, attachmentFormName, attachmentFormExtension, treatmentTypeId } = req.body;
+        const { name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId } = req.body;
         const user_id = req.user.id; // Doctor
 
         if (!name || !patientName || !treatmentTypeId) {
@@ -116,20 +116,23 @@ const createCase = async (req, res, next) => {
         }
 
         // Convertir archivo a base64
-        const attachmentFormBase64 = req.file.buffer.toString('base64');
+        const attachmentTreatmentType = req.file.buffer.toString('base64');
 
         // Convert size to MB
         const attachmentFormSize = (req.file.size / (1024 * 1024)).toFixed(2);
 
+        const fileName = req.file.originalname;  // Nombre original del archivo
+        const extension = fileName.split('.').pop(); // Extraer la extensión
+
         // Nombre seguro del archivo
 
-        const safeAttachmentFormName = path.basename(attachmentFormName).replace(/\s/g, "_");
-        const safeExtension = path.extname(`.${attachmentFormExtension}`);
+        const safeAttachmentFormName = path.basename(fileName).replace(/\s/g, "_");
+        const safeExtension = path.extname(`.${extension}`);
         const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}${safeExtension}`;
 
         // Subir archivo a S3
         try {
-            const urlFile = await uploadFileToS3(attachmentFormBase64, folderName);
+            const urlFile = await uploadFileToS3(attachmentTreatmentType, folderName);
 
             // Save into database
             saveUploadedFile(caseCreated.insertId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, safeExtension);
@@ -289,9 +292,93 @@ const addMessagesCase = async (req, res, next) => {
         // Guardar logs del sistema
         systemLogs(user_id, "New message add", result.insertId, MODULES.CASES);
 
-        res.status(201).json({ message: 'Message add successfully' });
+        // Get data from message
+        const [messageData] = await pool.query('SELECT * FROM messages_case WHERE id = ? LIMIT 1', [result.insertId]);
+
+        if(messageData.length === 0)
+        {
+            return next(createError("Error, please try again later", ["Error to get data from message"], req.traceId, req.originalUrl));
+        }
+
+        const messageDataResponse = messageData[0];
+
+        // Get system user
+        const [systemUser] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [messageDataResponse.user_id]);
+        // Get caseStatus
+        const [caseStatus] = await pool.query('SELECT id, status, span_color FROM status_case WHERE id = ? LIMIT 1', [messageDataResponse.status_case_id]);
+
+        const filteredResponse = {
+            id: result.insertId,
+            caseId: messageDataResponse.case_id,
+            systemUser: systemUser[0],
+            message,
+            caseStatus: caseStatus[0],
+            createdOn: formattedDate(new Date())
+        };
+
+        res.status(201).json(filteredResponse);
     } catch (error) {
         next(error);
+    }
+}
+
+
+/**
+ * TODO get All messages for case
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+const getMessageCases = async( req, res, next ) => 
+{   
+    const { page, pageSize, ...filters } = req.query;
+
+    try {
+        // Conversión y validación
+        const validatedPage = parseInt(page, 10) || 1;
+        const validatedPageSize = parseInt(pageSize, 10) || 10;
+
+        // * SQL Query base
+        const baseQuery = "SELECT * FROM vw_messages";
+        const countQuery = "SELECT COUNT(*) AS total FROM vw_messages";
+
+        // Add order by to the filters
+        const orderBy = { column: 'created_at', direction: 'DESC' };
+
+        // Obtener datos paginados
+        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize, orderBy);
+
+        // Formatear los resultados
+        const filteredResponse = await Promise.all(
+            paginatedData.results.map(async (item) => {
+                // Get system user
+                const [systemUser] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [item.user_id]);
+                // Get caseStatus
+                const [caseStatus] = await pool.query('SELECT id, status, span_color FROM status_case WHERE id = ? LIMIT 1', [item.status_case_id]);
+    
+                return {
+                    id: item.id,
+                    caseId: item.case_id,
+                    systemUser: systemUser[0],
+                    message: item.message,
+                    caseStatus: caseStatus[0],
+                    createdOn: formattedDate(item.created_at)
+                };
+    
+    
+                
+            })
+        );
+
+        // Construir la respuesta
+        const response = {
+            ...paginatedData,
+            results: filteredResponse,
+        };
+
+        res.status(200).json(response);
+    } catch (error) {
+        next(error)
     }
 }
 
@@ -385,5 +472,6 @@ module.exports = {
     uploadMultipleFiles,
     assignedCase,
     addMessagesCase,
-    getCaseById
+    getCaseById,
+    getMessageCases
 }
