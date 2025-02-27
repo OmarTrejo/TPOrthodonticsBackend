@@ -303,17 +303,26 @@ const addMessagesCase = async (req, res, next) => {
         const messageDataResponse = messageData[0];
 
         // Get system user
-        const [systemUser] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [messageDataResponse.user_id]);
+        const [systemUser] = await pool.query('SELECT id, fullname, email, photo FROM users WHERE id = ? LIMIT 1', [messageDataResponse.user_id]);
         // Get caseStatus
-        const [caseStatus] = await pool.query('SELECT id, status, span_color FROM status_case WHERE id = ? LIMIT 1', [messageDataResponse.status_case_id]);
+        const [caseStatus] = await pool.query('SELECT id, status, span_color, general FROM status_case WHERE id = ? LIMIT 1', [messageDataResponse.status_case_id]);
 
         const filteredResponse = {
-            id: result.insertId,
+            id: messageDataResponse.id,
             caseId: messageDataResponse.case_id,
-            systemUser: systemUser[0],
-            message,
-            caseStatus: caseStatus[0],
-            createdOn: formattedDate(new Date())
+            systemUser: {
+                fullName: systemUser[0].fullname,
+                email: systemUser[0].email,
+                avatarUrl: systemUser[0].photo
+            },
+            message: messageDataResponse.message,
+            caseStatus: {
+                id: caseStatus[0].id,
+                name: caseStatus[0].status,
+                color: caseStatus[0].span_color,
+                general: caseStatus[0].general,
+            },
+            createdOn: formattedDate(messageDataResponse.created_at)
         };
 
         res.status(201).json(filteredResponse);
@@ -352,16 +361,25 @@ const getMessageCases = async( req, res, next ) =>
         const filteredResponse = await Promise.all(
             paginatedData.results.map(async (item) => {
                 // Get system user
-                const [systemUser] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [item.user_id]);
+                const [systemUser] = await pool.query('SELECT id, fullname, email, photo FROM users WHERE id = ? LIMIT 1', [item.user_id]);
                 // Get caseStatus
-                const [caseStatus] = await pool.query('SELECT id, status, span_color FROM status_case WHERE id = ? LIMIT 1', [item.status_case_id]);
+                const [caseStatus] = await pool.query('SELECT id, status, span_color, general FROM status_case WHERE id = ? LIMIT 1', [item.status_case_id]);
     
                 return {
                     id: item.id,
                     caseId: item.case_id,
-                    systemUser: systemUser[0],
+                    systemUser: {
+                        fullName: systemUser[0].fullname,
+                        email: systemUser[0].email,
+                        avatarUrl: systemUser[0].photo
+                    },
                     message: item.message,
-                    caseStatus: caseStatus[0],
+                    caseStatus: {
+                        id: caseStatus[0].id,
+                        name: caseStatus[0].status,
+                        color: caseStatus[0].span_color,
+                        general: caseStatus[0].general,
+                    },
                     createdOn: formattedDate(item.created_at)
                 };
     
