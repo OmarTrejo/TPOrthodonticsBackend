@@ -181,7 +181,7 @@ const updateUrlViewer = async (req, res, next) => {
         // Validate if url contains https://tpoviewer.tportho.com
         if(!urlViewer.includes('https://tpoviewer.tportho.com'))
         {
-            return next(createError("Error, please try again later", ["The URL not is valid"], req.traceId, req.originalUrl));
+            return next(createError("Error, please try again later", ["The URL is not valid"], req.traceId, req.originalUrl));
         }
 
         // Update case with id
