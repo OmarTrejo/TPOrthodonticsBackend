@@ -90,6 +90,9 @@ const approvedRequests = async( req, res, next) => {
         // * Update your requests
         await pool.query('UPDATE request_user SET status = 0 WHERE id = ?', [id]);
 
+        // Create conf notifications
+        await pool.query('INSERT INTO conf_notification (user_id, email_enabled, sms_enabled, whatsapp, new_case, new_comment, new_assignment, new_access_request) VALUES (?, 0, 0, 0, 0, 0, 0, 0 )', [user.insertId])
+
         // Send email with new password
         sendAccessRequestApprovedEmail(new_user.email, new_user.fullname);
 

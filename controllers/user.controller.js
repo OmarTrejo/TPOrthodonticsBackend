@@ -25,8 +25,11 @@ const addUser = async (req, res, next) => {
         // CREATE A HASH PASSWORD
         const hash_password = encryptPassword(temp_password);
 
+        // Generate a token with 8 numbers
+        const token = Math.floor(10000000 + Math.random() * 90000000).toString();
+
         // INSERT INTO DB
-        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, password, role_id, dc_id, customer_id, status_id, recovery_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)', [username, fullName, email, phoneNumber, hash_password, roleId, organizationId, customerId, STATUS_USER.PENDING_ACTIVATION]);
+        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, password, role_id, dc_id, customer_id, status_id, recovery_password, token_verification) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)', [username, fullName, email, phoneNumber, hash_password, roleId, organizationId, customerId, STATUS_USER.PENDING_ACTIVATION, token]);
 
         // VALIDATE THAT THE USER WAS CREATED
         if (result.affectedRows === 0) {
@@ -42,8 +45,8 @@ const addUser = async (req, res, next) => {
         // Save a logs
         systemLogs(user_id, "New row inserted", result.insertId, MODULES.USERS)
 
-        // Generate a token with 8 numbers
-        const token = Math.floor(10000000 + Math.random() * 90000000).toString();
+        // Create conf notifications
+        await pool.query('INSERT INTO conf_notification (user_id, email_enabled, sms_enabled, whatsapp, new_case, new_comment, new_assignment, new_access_request) VALUES (?, 0, 0, 0, 0, 0, 0, 0 )', [result.insertId])
 
         // SEND A EMAIL WITH PASSWORD 
         sendWelcomeEmail(email, fullName, temp_password, token);
