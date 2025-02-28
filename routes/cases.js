@@ -37,7 +37,6 @@ router.post('/uploadMultipleFiles', upload.array('attachments', 5), [
 router.post('/addMessagesCase', [
     body("caseId").notEmpty().withMessage("Case ID is required"),
     body("message").notEmpty().withMessage("Message is required"),
-    body("caseStatusId").notEmpty().withMessage("Case status is required"),
     validateRequest
 ], addMessagesCase);
 router.get('/getCaseById/:id',[

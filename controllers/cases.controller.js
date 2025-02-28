@@ -123,7 +123,7 @@ const createCase = async (req, res, next) => {
         // Subir archivo a S3
         try {
             if (treatmentType[0].is_pdf_file) {
-       
+
                 if (caseCreated.affectedRows === 0) {
                     return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
                 }
@@ -135,16 +135,16 @@ const createCase = async (req, res, next) => {
 
                 // Convertir archivo a base64
                 const attachmentTreatmentType = req.file.buffer;
-    
+
                 // Convert size to MB
                 const attachmentFormSize = (req.file.size / (1024 * 1024)).toFixed(2);
-    
+
                 const fileName = req.file.originalname;  // Nombre original del archivo
                 const extension = fileName.split('.').pop(); // Extraer la extensión
                 // Nombre seguro del archivo
-    
+
                 const safeAttachmentFormName = path.basename(fileName).replace(/\s/g, "_");
-    
+
                 const folderName = `cases/${caseCreated.insertId}/${safeAttachmentFormName}`;
                 const urlFile = await uploadFileToS3(attachmentTreatmentType, folderName);
                 // Save into database
@@ -179,8 +179,7 @@ const updateUrlViewer = async (req, res, next) => {
     try {
 
         // Validate if url contains https://tpoviewer.tportho.com
-        if(!urlViewer.includes('https://tpoviewer.tportho.com'))
-        {
+        if (!urlViewer.includes('https://tpoviewer.tportho.com')) {
             return next(createError("Error, please try again later", ["The URL is not valid"], req.traceId, req.originalUrl));
         }
 
@@ -310,8 +309,10 @@ const addMessagesCase = async (req, res, next) => {
             return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
         }
 
-        // Update status from case
-        await pool.query('UPDATE cases SET status_case_id = ? WHERE id = ?', [caseStatusId, caseId]);
+        if (caseStatusId != null) {
+            // Update status from case
+            await pool.query('UPDATE cases SET status_case_id = ? WHERE id = ?', [caseStatusId, caseId]);
+        }
 
         // Guardar logs del sistema
         systemLogs(user_id, "New message add", result.insertId, MODULES.CASES);
@@ -330,6 +331,24 @@ const addMessagesCase = async (req, res, next) => {
         // Get caseStatus
         const [caseStatus] = await pool.query('SELECT id, status, span_color, general FROM status_case WHERE id = ? LIMIT 1', [messageDataResponse.status_case_id]);
 
+        let caseStatusData = null;
+        if (caseStatus.length === 0) {
+            caseStatusData = {
+                id: 0,
+                status: "",
+                span_color: "#000000",
+                general: false
+            };
+        } else {
+            // Corregido el error en la asignación
+            caseStatusData = {
+                id: caseStatus[0].id,
+                name: caseStatus[0].status,
+                color: caseStatus[0].span_color,
+                general: caseStatus[0].general,
+            };
+        }
+
         const filteredResponse = {
             id: messageDataResponse.id,
             caseId: messageDataResponse.case_id,
@@ -340,14 +359,10 @@ const addMessagesCase = async (req, res, next) => {
                 avatarUrl: systemUser[0].photo
             },
             message: messageDataResponse.message,
-            caseStatus: {
-                id: caseStatus[0].id,
-                name: caseStatus[0].status,
-                color: caseStatus[0].span_color,
-                general: caseStatus[0].general,
-            },
+            caseStatus: caseStatusData,
             createdOn: formattedDate(messageDataResponse.created_at)
         };
+
 
         res.status(201).json(filteredResponse);
     } catch (error) {
