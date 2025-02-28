@@ -177,6 +177,13 @@ const updateUrlViewer = async (req, res, next) => {
     const user_id = req.user.id;
 
     try {
+
+        // Validate if url contains https://tpoviewer.tportho.com
+        if(!urlViewer.includes('https://tpoviewer.tportho.com'))
+        {
+            return next(createError("Error, please try again later", ["The URL not is valid"], req.traceId, req.originalUrl));
+        }
+
         // Update case with id
         const [result] = await pool.query('UPDATE cases SET url_viewer = ? WHERE id = ?', [urlViewer, id]);
         if (result.affectedRows === 0) {
