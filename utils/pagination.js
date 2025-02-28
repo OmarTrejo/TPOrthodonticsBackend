@@ -31,13 +31,17 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
                 strictConditions.push("is_deleted = ?");
                 filterValuesStrict.push(filters.is_deleted);
             }
+            if (filters.hasOwnProperty('seen')) {
+                strictConditions.push("seen = ?");
+                filterValuesStrict.push(filters.seen);
+            }
             if (filters.hasOwnProperty('userId')) {
                 strictConditions.push("userId != ?");
                 filterValuesStrict.push(filters.userId);
             }
 
             Object.keys(filters).forEach((key) => {
-                if (key !== 'is_deleted' && key !== 'userId') {
+                if (key !== 'is_deleted' && key !== 'userId' && key !== 'seen') {
                     flexibleConditions.push(`${key} LIKE ?`);
                     filterValuesFlexible.push(`%${filters[key]}%`);
                 }

@@ -19,6 +19,7 @@ class Server {
         this.myaccountPath = '/api/myaccount';
         this.casesPath = '/api/cases';
         this.homePath = '/api/home';
+        this.notificationsPath = '/api/notifications';
 
         //Middlewares
         this.middlewares();
@@ -57,6 +58,7 @@ class Server {
         this.app.use(this.permissionPath, authenticateUser, require('../routes/permissions'));
         this.app.use(this.myaccountPath, authenticateUser, require('../routes/account'));
         this.app.use(this.casesPath, authenticateUser, require('../routes/cases'));
+        this.app.use(this.notificationsPath, authenticateUser, require('../routes/notifications'));
     }
 
     listen(){     

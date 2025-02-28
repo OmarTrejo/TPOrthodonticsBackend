@@ -7,6 +7,7 @@ const path = require('path');
 const pool = require('../database/config');
 const createError = require('../utils/createError');
 const { recyclerBin } = require("../utils/recyclerbin");
+const { sendNotification } = require("../utils/notifications");
 /**
  * TODO Get all cases for role
  * @param {*} req 
@@ -157,6 +158,9 @@ const createCase = async (req, res, next) => {
 
         // Guardar logs del sistema
         systemLogs(user_id, "New row inserted", caseCreated.insertId, MODULES.CASES);
+
+        // Send a notification to All users techs
+        sendNotification("New Case Created", "A new support case has been created. Please review the details and take action as needed.", user_id, MODULES.CASES, caseCreated.insertId);
 
         res.status(201).json({ message: 'Create case successfully' });
 
