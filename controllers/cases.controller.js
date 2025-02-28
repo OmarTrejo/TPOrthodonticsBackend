@@ -333,14 +333,7 @@ const addMessagesCase = async (req, res, next) => {
         const [caseStatus] = await pool.query('SELECT id, status, span_color, general FROM status_case WHERE id = ? LIMIT 1', [messageDataResponse.status_case_id]);
 
         let caseStatusData = null;
-        if (caseStatus.length === 0) {
-            caseStatusData = {
-                id: 0,
-                status: "",
-                span_color: "#000000",
-                general: false
-            };
-        } else {
+        if (caseStatus.length > 0) {
             // Corregido el error en la asignación
             caseStatusData = {
                 id: caseStatus[0].id,
@@ -405,14 +398,7 @@ const getMessageCases = async (req, res, next) => {
                 const [caseStatus] = await pool.query('SELECT id, status, span_color, general FROM status_case WHERE id = ? LIMIT 1', [item.status_case_id]);
 
                 let caseStatusData = null;
-                if (caseStatus.length === 0) {
-                    caseStatusData = {
-                        id: 0,
-                        status: "",
-                        span_color: "#000000",
-                        general: false
-                    };
-                } else {
+                if (caseStatus.length > 0) {
                     // Corregido el error en la asignación
                     caseStatusData = {
                         id: caseStatus[0].id,
