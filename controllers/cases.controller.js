@@ -300,16 +300,17 @@ const addMessagesCase = async (req, res, next) => {
     const user_id = req.user.id;
 
     try {
+
         const [result] = await pool.query(
             'INSERT INTO messages_case (case_id, user_id, status_case_id, message) VALUES (?, ?, ?, ?)',
-            [caseId, user_id, caseStatusId, message]
+            [caseId, user_id, (caseStatusId) ? caseStatusId : null, message]
         );
 
         if (result.affectedRows === 0) {
             return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
         }
 
-        if (caseStatusId != null) {
+        if (caseStatusId) {
             // Update status from case
             await pool.query('UPDATE cases SET status_case_id = ? WHERE id = ?', [caseStatusId, caseId]);
         }
