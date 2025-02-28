@@ -512,8 +512,7 @@ const changePassword = async (req, res, next) => {
 }
 
 const disabledMFA = async(req, res, next) => {
-    const id = req.user.id;
-    const { userId } = req.body;
+    const { id } = req.params;
     try
     {
         // Update user data
