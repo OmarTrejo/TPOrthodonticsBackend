@@ -304,7 +304,13 @@ const getNumberOfCasesClosed = async (periodicity) => {
     const [result] = await pool.query(query);
     return result[0].count;
 }
-// Functios to Tech
+
+/**
+ * TODO funcitons to tech
+ * @param {*} periodicity 
+ * @param {*} id 
+ * @returns 
+ */
 const getNumberOfCasesClosedTech = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count

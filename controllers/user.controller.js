@@ -26,7 +26,7 @@ const addUser = async (req, res, next) => {
         const hash_password = encryptPassword(temp_password);
 
         // INSERT INTO DB
-        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, password, role_id, dc_id, customer_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [username, fullName, email, phoneNumber, hash_password, roleId, organizationId, customerId, STATUS_USER.PENDING_ACTIVATION]);
+        const [result] = await pool.query('INSERT INTO users (username, fullname, email, phone_number, password, role_id, dc_id, customer_id, status_id, recovery_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)', [username, fullName, email, phoneNumber, hash_password, roleId, organizationId, customerId, STATUS_USER.PENDING_ACTIVATION]);
 
         // VALIDATE THAT THE USER WAS CREATED
         if (result.affectedRows === 0) {
@@ -501,7 +501,7 @@ const changePassword = async (req, res, next) => {
         const passwordEncrypted = await encryptPassword(password);
 
         // Update user password
-        await pool.query('UPDATE users SET password = ?, recovery_password = 0, token_verification = ? WHERE id = ?', [passwordEncrypted, null, user_id]);
+        await pool.query('UPDATE users SET password = ?, recovery_password = 0, token_verification = ?, status_id = ? WHERE id = ?', [passwordEncrypted, null, STATUS_USER.ACTIVE, user_id]);
 
         // * Response the application
         return res.status(200).json({message: 'Password changed successfully.'});
