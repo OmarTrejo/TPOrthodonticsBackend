@@ -14,7 +14,7 @@ const sendNotification = async (title, message, transmitter, module, id) => {
 
         if (module === MODULES.CASES)
         {
-            redirectUrl = `service-cases/${id}`
+            redirectUrl = `/service-cases/${id}`
         }
         else if (module === MODULES.REQUESTS)
         {
@@ -22,8 +22,7 @@ const sendNotification = async (title, message, transmitter, module, id) => {
         }
 
         // Get all users that have a conf-notification with the action
-        const receivers = await getReceivers(title, module);
-
+        const receivers = await getReceivers(title);
         // Save into database a notifications
         for (const receiver of receivers) {
             const receiverId = receiver.id;
@@ -51,7 +50,7 @@ const sendNotification = async (title, message, transmitter, module, id) => {
     }
 }   
 
-const getReceivers = async (title, module) => {
+const getReceivers = async (title) => {
     try {
         let query = null;
 
@@ -65,7 +64,7 @@ const getReceivers = async (title, module) => {
                 WHERE r.role_name IN ('Tech', 'Admin') AND cn.new_case = 1;
             `;
         }
-        else if (title === "New Request Created")
+        else if (title === "New access request")
         {
             query = `
                 SELECT u.id, u.fullname, u.email, u.phone_number, cn.email_enabled, cn.sms_enabled, cn.whatsapp FROM users u

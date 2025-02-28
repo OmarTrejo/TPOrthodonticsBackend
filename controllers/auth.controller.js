@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const { encryptPassword, generateTempPassword } = require('../utils/password');
 const { sendEmailForgotPassword, sendAccessRequestEmail } = require('../utils/email');
 const createError = require('../utils/createError');
+const { sendNotification } = require('../utils/notifications');
+const { MODULES } = require('../utils/constants');
 
 // Login that require user and password
 const login = async (req, res, next) => {
@@ -219,6 +221,9 @@ const addAccessRequests = async (req, res, next) => {
 
         // Send email notification
         sendAccessRequestEmail(email, fullName)
+
+        // Create a notification
+        sendNotification("New access request", "A new access request has been submitted. Please review and approve or deny it as necessary.", null, MODULES.REQUESTS, null);
 
         // * Response the application
         return res.status(200).json({message: 'Access Requests sent successfully.'});
