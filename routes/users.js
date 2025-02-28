@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { body, param } = require('express-validator');
 
-const { getUsers, addUser, getUserById, updateUser, updateStatus, deleteUser, getLogs, deletedMany, changePassword } = require('../controllers/user.controller');
+const { getUsers, addUser, getUserById, updateUser, updateStatus, deleteUser, getLogs, deletedMany, changePassword, disabledMFA } = require('../controllers/user.controller');
 const validateRequest = require('../middleware/validateRequest');
 
 const router = Router();
@@ -49,5 +49,9 @@ router.put('/updatePassword', [
     body("password").isLength({min:8}).withMessage("Password must be at least 8 characters long"),
     validateRequest
 ], changePassword);
+router.put('/disabledMFA/:id', [
+    param("id").notEmpty().withMessage("User Id is required"),
+    validateRequest
+], disabledMFA);
 
 module.exports = router;

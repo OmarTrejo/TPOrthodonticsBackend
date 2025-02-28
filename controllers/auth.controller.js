@@ -299,33 +299,5 @@ const forgotPassword = async( req, res, next) => {
     }
 }
 
-const validateMFA = async (req, res) => {
-    const { userId, mfaCode } = req.body;
-
-    try {
-        const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
-
-        if (rows.length === 0) {
-            return res.status(401).json({ message: 'Usuario no encontrado' });
-        }
-
-        const user = rows[0];
-
-        const mfaMatch = await bcrypt.compare(mfaCode, user.mfa_code);
-
-        if (!mfaMatch) {
-            return res.status(401).json({ message: 'Código MFA inválido' });
-        }
-
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        res.json({ token });
-    } catch (error) {
-        console.error('Error al validar MFA:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
-    }
-
-}
-
 
 module.exports = { login, addAccessRequests, forgotPassword };

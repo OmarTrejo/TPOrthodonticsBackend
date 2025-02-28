@@ -18,6 +18,7 @@ class Server {
         this.permissionPath = '/api/permissions';
         this.myaccountPath = '/api/myaccount';
         this.casesPath = '/api/cases';
+        this.homePath = '/api/home';
 
         //Middlewares
         this.middlewares();
@@ -47,6 +48,7 @@ class Server {
         this.app.use(this.authPath, require('../routes/auth'));
 
         // Private routes (required JWT)
+        this.app.use(this.homePath, authenticateUser, require('../routes/kpi'));
         this.app.use(this.usersPath, authenticateUser, require('../routes/users'));
         this.app.use(this.organizationPath, authenticateUser, require('../routes/organization'));
         this.app.use(this.catalogsPath, authenticateUser, require('../routes/catalogs'));

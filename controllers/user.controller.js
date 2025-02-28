@@ -511,6 +511,21 @@ const changePassword = async (req, res, next) => {
     }
 }
 
+const disabledMFA = async(req, res, next) => {
+    const id = req.user.id;
+    const { userId } = req.body;
+    try
+    {
+        // Update user data
+        await pool.query('UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_verified = 0 WHERE id = ?', [userId]);
+
+        res.status(200).json({message:"MFA disabled succesfully"});
+    }catch(error)
+    {
+        next(error);
+    }
+}   
+
 module.exports = {
     getUsers,
     addUser,
@@ -520,5 +535,6 @@ module.exports = {
     deleteUser,
     getLogs,
     deletedMany,
-    changePassword
+    changePassword,
+    disabledMFA
 }
