@@ -320,7 +320,7 @@ const addMessagesCase = async (req, res, next) => {
         }
 
         // Guardar logs del sistema
-        systemLogs(user_id, "New message add", result.insertId, MODULES.CASES);
+        systemLogs(user_id, "New message add", caseId, MODULES.CASES);
 
         // Get data from message
         const [messageData] = await pool.query('SELECT * FROM messages_case WHERE id = ? LIMIT 1', [result.insertId]);

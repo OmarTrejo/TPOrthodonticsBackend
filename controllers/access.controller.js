@@ -3,11 +3,9 @@ const { MODULES, ROLES_USER, STATUS_USER } = require('../utils/constants');
 const { formattedDate } = require('../utils/dates');
 const { sendAccessRequestDenyEmail, sendAccessRequestApprovedEmail } = require('../utils/email');
 const { paginateQuery } = require('../utils/pagination');
-const { systemLogs } = require('../utils/systemLogs');
 const createError = require('../utils/createError');
 const { insertNotification } = require('../utils/addConfNotifications');
 // const { MODULES } = require('../utils/constants');
-// const { systemLogs } = require('../utils/systemLogs');
 
 // * Get all requests access
 const getRequestsAccess = async (req, res, next) => {
@@ -81,9 +79,6 @@ const approvedRequests = async( req, res, next) => {
         // Create user
         const [user] = await pool.query('INSERT INTO users (username, email, password, fullname, role_id, status_id) VALUES (?, ?, ?, ?, ?, ?)', [username, new_user.email, new_user.password, new_user.fullname, ROLES_USER.DOCTOR, STATUS_USER.ACTIVE]);
 
-        // Save logs
-        systemLogs(user_id, "Requests access has been approved", user.insertId, MODULES.REQUESTS);
-
         // Create notifications data
         insertNotification(user.insertId);
         
@@ -116,8 +111,6 @@ const denyAccess = async(req, res, next) => {
         await pool.query('UPDATE request_user SET status = 0 WHERE id = ?', [id]);
         // * Se elimina la solicitud, y envía un correo que fue denegado su acceso
         sendAccessRequestDenyEmail(applicant[0].email, applicant[0].fullname);
-
-        systemLogs(user_id, "Request Access has been denied", id, MODULES.REQUESTS);
 
         res.status(204).json();
     }catch(error)

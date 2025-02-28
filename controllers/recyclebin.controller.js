@@ -2,7 +2,6 @@ const pool = require("../database/config.js");
 const { paginateQuery } = require('../utils/pagination');
 const { STATUS_USER, MODULES, TABLE_MAPPING } = require('../utils/constants.js');
 const { formattedDate } = require("../utils/dates");
-const { systemLogs } = require("../utils/systemLogs.js");
 
 const getAllRecycleBin = async (req, res, next) => {
     const { page, pageSize, ...filters } = req.query;
@@ -169,9 +168,6 @@ const restoreRecycleBin = async (req, res, next) => {
         
         // Update status_id and deleted_at
         await pool.query(`UPDATE recyclebin SET status = 0 WHERE id = ?`, [id]);
-
-        // Notificar que hubo una restauración
-        systemLogs(user_id,`Restore record ${id}`, id, MODULES.RECYCLE_BIN);
 
         res.status(200).json({message:"Restore record successfully"});
     } catch (error) {
