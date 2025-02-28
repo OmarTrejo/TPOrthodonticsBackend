@@ -197,12 +197,25 @@ const veryfiedMFA = async(req, res, next) => {
     try
     {
         const [users] = await pool.query('SELECT mfa_secret FROM users WHERE id = ? LIMIT 1', [id]);
+
+        // Validate user
+        if (users.length === 0) {
+            const error = createError(
+                "User not found", // Mensaje de error
+                ["The ID user does not exists"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
+        // Init user
         const user = users[0];
 
         const verified = speakeasy.totp.verify({
             secret: user.mfa_secret,
             encoding: 'base32',
-            token: token
+            token: token,
+            window: 1 // Ajusta este valor según tus necesidades
         });
 
         if (!verified) {
@@ -215,6 +228,9 @@ const veryfiedMFA = async(req, res, next) => {
             return next(error); // Pasa el error al middleware de manejo de errores
         }
 
+        // Update DB
+        await pool.query('UPDATE users SET mfa_enabled = 1, mfa_verified = 1 WHERE id = ?', [id]);
+
         res.status(200).json({message:"MFA verified succesfully"});
     }catch(error)
     {
@@ -222,10 +238,32 @@ const veryfiedMFA = async(req, res, next) => {
     }
 }
 
+/**
+ * Disabled MFA
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+
+const disabledMFA = async(req, res, next) => {
+    const id = req.user.id;
+    try
+    {
+        // Update user data
+        await pool.query('UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_verified = 0 WHERE id = ?', [id]);
+
+        res.status(200).json({message:"MFA disabled succesfully"});
+    }catch(error)
+    {
+        next(error);
+    }
+}   
+
 module.exports = {
     getMyAccount,
     updateProfile,
     uploadUserPhoto,
     enabledMFA,
-    veryfiedMFA
+    veryfiedMFA,
+    disabledMFA
 }

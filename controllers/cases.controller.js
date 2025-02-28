@@ -110,31 +110,30 @@ const createCase = async (req, res, next) => {
         // Get treatmentType
         const [treatmentType] = await pool.query('SELECT id, type_name, is_pdf_file FROM type_case WHERE id = ? LIMIT 1', [treatmentTypeId])
 
-        if (treatmentType[0].is_pdf_file) {
-            // Validar archivo
-            if (!req.file) {
-                return next(createError("Error, file is required", ["Database connection error"], req.traceId, req.originalUrl));
-            }
-        }
-
         if (!name || !patientName || !treatmentTypeId) {
             return next(createError("Required fields are missing", ["name are missing", "patient name are missing", "treatmentTypeId are missing"], req.traceId, req.originalUrl));
         }
 
         const [user] = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user_id]);
 
-        const [caseCreated] = await pool.query(
-            'INSERT INTO cases (name, patient_name, observations, general_comments, tech_observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]
-        );
-
-        if (caseCreated.affectedRows === 0) {
-            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
-        }
-
         // Subir archivo a S3
         try {
             if (treatmentType[0].is_pdf_file) {
+
+                const [caseCreated] = await pool.query(
+                    'INSERT INTO cases (name, patient_name, observations, general_comments, tech_observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]
+                );
+        
+                if (caseCreated.affectedRows === 0) {
+                    return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+                }
+
+                // Validar archivo
+                if (!req.file) {
+                    return next(createError("Error, file is required", ["Database connection error"], req.traceId, req.originalUrl));
+                }
+
                 // Convertir archivo a base64
                 const attachmentTreatmentType = req.file.buffer;
     
@@ -153,7 +152,6 @@ const createCase = async (req, res, next) => {
                 saveUploadedFile(caseCreated.insertId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, extension);
             }
         } catch (error) {
-            console.error("Error uploading to S3:", error);
             return next(createError("Failed to upload file", [error.message], req.traceId, req.originalUrl));
         }
 
@@ -268,7 +266,6 @@ const uploadMultipleFiles = async (req, res, next) => {
                 saveUploadedFile(caseId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, safeExtension);
 
             } catch (error) {
-                console.error("Error uploading to S3:", error);
                 return next(createError("Failed to upload file", [error.message], req.traceId, req.originalUrl));
             }
         }
@@ -594,7 +591,6 @@ const deleteFile = async (req, res, next) => {
         const [fileData] = await pool.query('SELECT url_file FROM files_cases WHERE id = ? LIMIT 1', [id]);
         // Get file name
         const URLFile = fileData[0].url_file;
-        console.log(URLFile);
         // Delete file from s3
         await deleteFileFromS3(URLFile);
 

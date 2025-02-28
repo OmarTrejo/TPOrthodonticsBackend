@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { body, param } = require('express-validator');
 const validateRequest = require('../middleware/validateRequest');
 const multer = require('multer');
-const { getMyAccount, updateProfile, uploadUserPhoto, enabledMFA, veryfiedMFA } = require('../controllers/account.controller');
+const { getMyAccount, updateProfile, uploadUserPhoto, enabledMFA, veryfiedMFA, disabledMFA } = require('../controllers/account.controller');
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -31,5 +31,6 @@ router.put('/verifiedMFA', [
     body("token").notEmpty().withMessage("Token is required"),
     validateRequest
 ], veryfiedMFA);
+router.put('/disabledMFA', disabledMFA);
 
 module.exports = router;
