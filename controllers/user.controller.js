@@ -42,8 +42,11 @@ const addUser = async (req, res, next) => {
         // Save a logs
         systemLogs(user_id, "New row inserted", result.insertId, MODULES.USERS)
 
+        // Generate a token with 8 numbers
+        const token = Math.floor(10000000 + Math.random() * 90000000).toString();
+
         // SEND A EMAIL WITH PASSWORD 
-        sendWelcomeEmail(email, fullName, temp_password);
+        sendWelcomeEmail(email, fullName, temp_password, token);
 
         // Insert notification
         insertNotification(result.insertId);

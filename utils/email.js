@@ -18,7 +18,7 @@ const replacePlaceholders = (html, replacements) => {
 };
 
 // SEND Welcome email
-const sendWelcomeEmail = async (to, fullname, password) => {
+const sendWelcomeEmail = async (to, fullname, password, token) => {
     
 
     // Leer el archivo HTML
@@ -29,7 +29,8 @@ const sendWelcomeEmail = async (to, fullname, password) => {
         fullname,
         to,
         password,
-        BASE_URL
+        token,
+        BASE_URL,
     };
 
     // Reemplazar todas las variables en el HTML
