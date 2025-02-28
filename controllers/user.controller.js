@@ -516,7 +516,7 @@ const disabledMFA = async(req, res, next) => {
     try
     {
         // Update user data
-        await pool.query('UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_verified = 0 WHERE id = ?', [userId]);
+        await pool.query('UPDATE users SET mfa_enabled = 0, mfa_secret = NULL, mfa_verified = 0 WHERE id = ?', [id]);
 
         res.status(200).json({message:"MFA disabled succesfully"});
     }catch(error)
