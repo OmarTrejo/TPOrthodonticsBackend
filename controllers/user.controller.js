@@ -45,9 +45,6 @@ const addUser = async (req, res, next) => {
         // Save a logs
         systemLogs(user_id, "New row inserted", result.insertId, MODULES.USERS)
 
-        // Create conf notifications
-        await pool.query('INSERT INTO conf_notification (user_id, email_enabled, sms_enabled, whatsapp, new_case, new_comment, new_assignment, new_access_request) VALUES (?, 0, 0, 0, 0, 0, 0, 0 )', [result.insertId])
-
         // SEND A EMAIL WITH PASSWORD 
         sendWelcomeEmail(email, fullName, temp_password, token);
 

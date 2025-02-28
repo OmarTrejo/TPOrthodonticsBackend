@@ -28,7 +28,7 @@ const getMyAccount = async (req, res, next) => {
 
         const [organization] = await pool.query('SELECT * FROM vw_dcs WHERE id = ? LIMIT 1', [user.dc_id]);
 
-        const [conf] = await pool.query('SELECT * FROM vw_configurations WHERE id = 1 LIMIT 1');
+        const [conf] = await pool.query('SELECT * FROM vw_configurations WHERE id = ? LIMIT 1', [id]);
 
         // Consultar los modulos del role
         const [acls] = await pool.query('SELECT * FROM vw_access_control_list WHERE role_id = ?', [user.role_id]);
