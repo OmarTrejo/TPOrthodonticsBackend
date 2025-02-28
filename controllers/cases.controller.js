@@ -116,15 +116,14 @@ const createCase = async (req, res, next) => {
 
         const [user] = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user_id]);
 
+        const [caseCreated] = await pool.query(
+            'INSERT INTO cases (name, patient_name, observations, general_comments, tech_observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]
+        );
         // Subir archivo a S3
         try {
             if (treatmentType[0].is_pdf_file) {
-
-                const [caseCreated] = await pool.query(
-                    'INSERT INTO cases (name, patient_name, observations, general_comments, tech_observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]
-                );
-        
+       
                 if (caseCreated.affectedRows === 0) {
                     return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
                 }
@@ -152,6 +151,7 @@ const createCase = async (req, res, next) => {
                 saveUploadedFile(caseCreated.insertId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, extension);
             }
         } catch (error) {
+            console.error("Error uploading to S3:", error);
             return next(createError("Failed to upload file", [error.message], req.traceId, req.originalUrl));
         }
 
@@ -266,6 +266,7 @@ const uploadMultipleFiles = async (req, res, next) => {
                 saveUploadedFile(caseId, urlFile, safeAttachmentFormName, `${attachmentFormSize}MB`, safeExtension);
 
             } catch (error) {
+                console.error("Error uploading to S3:", error);
                 return next(createError("Failed to upload file", [error.message], req.traceId, req.originalUrl));
             }
         }
@@ -431,7 +432,7 @@ const getFilesCases = async (req, res, next) => {
         const [results] = await pool.query('SELECT * FROM vw_files_cases WHERE case_id = ? AND status = 1', [id]);
 
         if (results.length === 0) {
-            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+            res.status(200).json([]);
         }
 
         const filteredResponse = results.map((item) => {
