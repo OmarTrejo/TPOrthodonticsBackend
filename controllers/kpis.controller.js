@@ -62,8 +62,74 @@ const getKPIs = async (req, res, next) => {
             const kpi3 = await getNumberOfCasesUnnasigned(periodicity);
             const indicator3 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
             
-            // KPI 3 Closed
+            // KPI 4 Closed
             const kpi4 = await getNumberOfCasesClosed(periodicity);
+            const indicator4 = kpi2 > 10 ? "good" : (kpi2 < 2 ? "bad" : "neutral");
+            
+            response = [
+                {
+                    title: `Cases created ${periodicity_name}`,
+                    description: `Number of cases register`,
+                    value: kpi1,
+                    indicator: indicator1 // good, bad, or neutral
+                },
+                {
+                    title: `Cases opened ${periodicity_name}`,
+                    description: `Number of cases opened`,
+                    value: kpi2,
+                    indicator: indicator2 // good, bad, or neutral
+                },
+                {
+                    title: `Cases unnasigned ${periodicity_name}`,
+                    description: `Number of cases not assidned to tech `,
+                    value: kpi3,
+                    indicator: indicator3 // good, bad, or neutral
+                },
+                {
+                    title: `Cases closed ${periodicity_name}`,
+                    description: "Number of cases are closed",
+                    value: kpi4,
+                    indicator: indicator4 // good, bad, or neutral
+                }
+            ];
+        } else if (user.role_id === ROLES_USER.TECH) {
+            // KPI 1 Total
+            const kpi1 = await getNumberOfCasesAssignedTech(periodicity, user_id);
+            const indicator1 = "neutral";
+
+            // KPI 2 Opened
+            const kpi2 = await getNumberOfCasesClosedTech(periodicity, user_id);
+            const indicator2 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
+            
+            response = [
+                {
+                    title: `Cases assigned ${periodicity_name}`,
+                    description: `Number of cases assigned`,
+                    value: kpi1,
+                    indicator: indicator1 // good, bad, or neutral
+                },
+                {
+                    title: `Cases closed ${periodicity_name}`,
+                    description: `Number of cases closed`,
+                    value: kpi2,
+                    indicator: indicator2 // good, bad, or neutral
+                }
+            ];
+        } else if (user.role_id === ROLES_USER.DOCTOR) {
+            // KPI 1 Total
+            const kpi1 = await getNumberOfCasesDoctor(periodicity, user_id);
+            const indicator1 = kpi1 > 3 ? "good" : (kpi1 < 3 ? "bad" : "neutral");
+
+            // KPI 2 Opened
+            const kpi2 = await getNumberOfCasesOpenedDoctor(periodicity, user_id);
+            const indicator2 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
+
+            // KPI 3 Unnasigned
+            const kpi3 = await getNumberOfCasesUnnasignedDoctor(periodicity, user_id);
+            const indicator3 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
+            
+            // KPI 4 Closed
+            const kpi4 = await getNumberOfCasesClosedDoctor(periodicity, user_id);
             const indicator4 = kpi2 > 10 ? "good" : (kpi2 < 2 ? "bad" : "neutral");
             
             response = [
@@ -92,75 +158,38 @@ const getKPIs = async (req, res, next) => {
                     indicator: indicator4 // good, bad, or neutral
                 }
             ];
-        } else if (user.role_id === ROLES_USER.TECH) {
-            response = [
-                {
-                    title: `Tickets Assigned ${periodicity}`,
-                    description: "Number of tickets assigned to you",
-                    value: 0,
-                    indicator: "neutral",
-                    link: "/my-tickets"
-                },
-                {
-                    id: 2,
-                    name: "Tickets Closed",
-                    value: 0,
-                    icon: "fa-solid fa-check",
-                    color: "text-success",
-                    link: "/my-tickets"
-                },
-                {
-                    id: 3,
-                    name: "SLA Compliance",
-                    value: "0%",
-                    icon: "fa-solid fa-clock",
-                    color: "text-warning",
-                    link: "/reports"
-                }
-            ];
-        } else if (user.role_id === ROLES_USER.DOCTOR) {
-            response = [
-                {
-                    title: "My Open Tickets",
-                    description: "Number of active tickets",
-                    value: 0,
-                    indicator: "neutral",
-                    link: "/my-tickets"
-                },
-                {
-                    id: 2,
-                    name: "Average First Response Time",
-                    value: "0h",
-                    icon: "fa-solid fa-stopwatch",
-                    color: "text-info",
-                    link: "/reports"
-                },
-                {
-                    id: 3,
-                    name: "Service Satisfaction",
-                    value: "0/5",
-                    icon: "fa-solid fa-star",
-                    color: "text-warning",
-                    link: "/feedback"
-                }
-            ];
         } else {
             // It's a Support role (Assistant)
+            // KPI 1 Total
+            const kpi1 = await getTotalAccessRequests(periodicity, user_id);
+            const indicator1 = kpi1 > 3 ? "good" : (kpi1 < 3 ? "bad" : "neutral");
+
+            // KPI 2 Opened
+            const kpi2 = await getTotalAccessRequestsApproved(periodicity, user_id);
+            const indicator2 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
+
+            // KPI 3 Unnasigned
+            const kpi3 = await ggetTotalAccessRequestsDenied(periodicity, user_id);
+            const indicator3 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
+                        
             response = [
                 {
-                    title: "Requests Reviewed",
-                    description: "Requests accepted or rejected today",
-                    value: 0,
-                    indicator: "neutral",
-                    link: "/requests"
+                    title: `Total request ${periodicity_name}`,
+                    description: `Number of access requests`,
+                    value: kpi1,
+                    indicator: indicator1 // good, bad, or neutral
                 },
                 {
-                    id: 2,
-                    name: "Validation Time",
-                    value: "0 min",
-                    icon: "fa-solid fa-hourglass-half",
-                    color: "text-primary",
-                    link: "/reports"
+                    title: `Accepted requests ${periodicity_name}`,
+                    description: `Number of access requests approve`,
+                    value: kpi2,
+                    indicator: indicator2 // good, bad, or neutral
+                },
+                {
+                    title: `Denied requests ${periodicity_name}`,
+                    description: `Number of access requests deny`,
+                    value: kpi3,
+                    indicator: indicator3 // good, bad, or neutral
                 }
             ];
         }
@@ -174,6 +203,11 @@ const getKPIs = async (req, res, next) => {
     }
 }
 
+/**
+ * TODO Get KPI´s from databases and cases TO ADMIN
+ * @param {*} periodicity 
+ * @returns 
+ */
 const getNumberOfCases = async (periodicity) => {
     let query = `
         SELECT COUNT(*) AS count
@@ -270,8 +304,237 @@ const getNumberOfCasesClosed = async (periodicity) => {
     const [result] = await pool.query(query);
     return result[0].count;
 }
+// Functios to Tech
+const getNumberOfCasesClosedTech = async (periodicity, id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM cases
+        WHERE status_case_id = ${STATUS_CASE.CLOSED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    `;
 
+    if (periodicity === 2) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE status_case_id = ${STATUS_CASE.CLOSED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        `;
+    } else if (periodicity === 3) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE status_case_id = ${STATUS_CASE.CLOSED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+    }
 
+    const [result] = await pool.query(query);
+    return result[0].count;
+}
+const getNumberOfCasesAssignedTech = async (periodicity, id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM cases
+        WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    `;
+
+    if (periodicity === 2) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        `;
+    } else if (periodicity === 3) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+    }
+
+    const [result] = await pool.query(query);
+    return result[0].count;
+}
+
+/**
+ * TODO functions to Doctor
+ */
+
+const getNumberOfCasesDoctor = async (periodicity, id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM cases
+        WHERE customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    `;
+
+    if (periodicity === 2) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE customer_id = ${id} AND  created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        `;
+    } else if (periodicity === 3) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE customer_id = ${id} AND  created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+    }
+
+    const [result] = await pool.query(query);
+    return result[0].count;
+}
+const getNumberOfCasesOpenedDoctor = async (periodicity, id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM cases
+        WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.CLOSED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    `;
+
+    if (periodicity === 2) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.CLOSED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        `;
+    } else if (periodicity === 3) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.CLOSED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+    }
+
+    const [result] = await pool.query(query);
+    return result[0].count;
+}
+const getNumberOfCasesUnnasignedDoctor = async (periodicity, id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM cases
+        WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    `;
+
+    if (periodicity === 2) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        `;
+    } else if (periodicity === 3) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+    }
+
+    const [result] = await pool.query(query);
+    return result[0].count;
+}
+const getNumberOfCasesClosedDoctor = async (periodicity, id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM cases
+        WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    `;
+
+    if (periodicity === 2) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        `;
+    } else if (periodicity === 3) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM cases
+            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+    }
+
+    const [result] = await pool.query(query);
+    return result[0].count;
+}
+
+/**
+ * TODO Functions to support role
+ */
+const getTotalAccessRequests= (periodicity, id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM request_user
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    `;
+
+    if (periodicity === 2) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM request_user
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        `;
+    } else if (periodicity === 3) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM request_user
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+    }
+
+    const [result] = pool.query(query);
+    return result[0].count;
+
+}
+
+const getTotalAccessRequestsApproved = (periodicity, id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM logs_system
+        WHERE user_id = ${id} AND action like '%Requests access has been approved%' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    `;
+
+    if (periodicity === 2) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM logs_system
+            WHERE user_id = ${id} AND action like '%Requests access has been approved%' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        `;
+    } else if (periodicity === 3) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM logs_system
+            WHERE user_id = ${id} AND action like '%Requests access has been approved%' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+    }
+
+    const [result] = pool.query(query);
+    return result[0].count;
+
+}
+
+const ggetTotalAccessRequestsDenied= (periodicity, id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM logs_system
+        WHERE user_id = ${id} AND action like '%Request Access has been denied%' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    `;
+
+    if (periodicity === 2) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM logs_system
+            WHERE user_id = ${id} AND action like '%Request Access has been denied%' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        `;
+    } else if (periodicity === 3) {
+        query = `
+            SELECT COUNT(*) AS count
+            FROM logs_system
+            WHERE user_id = ${id} AND action like '%Request Access has been denied%' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+    }
+
+    const [result] = pool.query(query);
+    return result[0].count;
+
+}
 module.exports = {
     getKPIs
 }
