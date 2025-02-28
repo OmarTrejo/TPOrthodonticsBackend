@@ -404,6 +404,24 @@ const getMessageCases = async (req, res, next) => {
                 // Get caseStatus
                 const [caseStatus] = await pool.query('SELECT id, status, span_color, general FROM status_case WHERE id = ? LIMIT 1', [item.status_case_id]);
 
+                let caseStatusData = null;
+                if (caseStatus.length === 0) {
+                    caseStatusData = {
+                        id: 0,
+                        status: "",
+                        span_color: "#000000",
+                        general: false
+                    };
+                } else {
+                    // Corregido el error en la asignación
+                    caseStatusData = {
+                        id: caseStatus[0].id,
+                        name: caseStatus[0].status,
+                        color: caseStatus[0].span_color,
+                        general: caseStatus[0].general,
+                    };
+                }
+
                 return {
                     id: item.id,
                     caseId: item.case_id,
@@ -414,12 +432,7 @@ const getMessageCases = async (req, res, next) => {
                         avatarUrl: systemUser[0].photo
                     },
                     message: item.message,
-                    caseStatus: {
-                        id: caseStatus[0].id,
-                        name: caseStatus[0].status,
-                        color: caseStatus[0].span_color,
-                        general: caseStatus[0].general,
-                    },
+                    caseStatus: caseStatusData,
                     createdOn: formattedDate(item.created_at)
                 };
 
