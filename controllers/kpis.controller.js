@@ -464,7 +464,7 @@ const getNumberOfCasesClosedDoctor = async (periodicity, id) => {
 /**
  * TODO Functions to support role
  */
-const getTotalAccessRequests= (periodicity, id) => {
+const getTotalAccessRequests= async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM request_user
@@ -484,13 +484,12 @@ const getTotalAccessRequests= (periodicity, id) => {
             WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
-
-    const [result] = pool.query(query);
+    const [result] = await pool.query(query);
     return result[0].count;
 
 }
 
-const getTotalAccessRequestsApproved = (periodicity, id) => {
+const getTotalAccessRequestsApproved = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM logs_system
@@ -511,12 +510,12 @@ const getTotalAccessRequestsApproved = (periodicity, id) => {
         `;
     }
 
-    const [result] = pool.query(query);
+    const [result] = await pool.query(query);
     return result[0].count;
 
 }
 
-const ggetTotalAccessRequestsDenied= (periodicity, id) => {
+const ggetTotalAccessRequestsDenied= async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM logs_system
@@ -537,7 +536,7 @@ const ggetTotalAccessRequestsDenied= (periodicity, id) => {
         `;
     }
 
-    const [result] = pool.query(query);
+    const [result] = await pool.query(query);
     return result[0].count;
 
 }
