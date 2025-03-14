@@ -71,8 +71,6 @@ const getAllCases = async (req, res, next) => {
                     general: caseStatus[0].general,
                 },
                 additionalInfo: item.observations,
-                generalComments: item.general_comments,
-                technicalSpecifications: item.tech_observations,
                 orderNumber: item.order_number,
                 viewerUrl: item.url_viewer,
                 isDeleted: Boolean(item.is_deleted),
@@ -105,7 +103,7 @@ const getAllCases = async (req, res, next) => {
 
 const createCase = async (req, res, next) => {
     try {
-        const { name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId } = req.body;
+        const { name, patientName, additionalInfo, treatmentTypeId } = req.body;
         const user_id = req.user.id; // Doctor
 
         // Get treatmentType
@@ -118,8 +116,8 @@ const createCase = async (req, res, next) => {
         const [user] = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user_id]);
 
         const [caseCreated] = await pool.query(
-            'INSERT INTO cases (name, patient_name, observations, general_comments, tech_observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [name, patientName, additionalInfo, generalComments, technicalSpecifications, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]
+            'INSERT INTO cases (name, patient_name, observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [name, patientName, additionalInfo, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]
         );
         // Subir archivo a S3
         try {
@@ -536,8 +534,6 @@ const getCaseById = async (req, res, next) => {
                 general: caseStatus[0].general,
             },
             additionalInfo: caseData.observations,
-            generalComments: caseData.general_comments,
-            technicalSpecifications: caseData.tech_observations,
             orderNumber: caseData.order_number,
             viewerUrl: caseData.url_viewer,
             isDeleted: Boolean(caseData.is_deleted),
