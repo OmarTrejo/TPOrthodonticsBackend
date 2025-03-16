@@ -1,5 +1,5 @@
 const pool = require('../database/config');
-import * as createError from 'http-errors';
+const createError = require('../utils/createError');
 import { ROLES_USER } from '../utils/constants';
 
 const getCountries = async (req, res, next) => {
