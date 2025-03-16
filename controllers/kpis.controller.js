@@ -62,8 +62,8 @@ const getKPIs = async (req, res, next) => {
             const kpi3 = await getNumberOfCasesUnnasigned(periodicity);
             const indicator3 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
             
-            // KPI 4 Closed
-            const kpi4 = await getNumberOfCasesClosed(periodicity);
+            // KPI 4 DELETED
+            const kpi4 = await getNumberOfCasesDELETED(periodicity);
             const indicator4 = kpi2 > 10 ? "good" : (kpi2 < 2 ? "bad" : "neutral");
             
             response = [
@@ -86,8 +86,8 @@ const getKPIs = async (req, res, next) => {
                     indicator: indicator3 // good, bad, or neutral
                 },
                 {
-                    title: `Cases closed ${periodicity_name}`,
-                    description: "Number of cases are closed",
+                    title: `Cases DELETED ${periodicity_name}`,
+                    description: "Number of cases are DELETED",
                     value: kpi4,
                     indicator: indicator4 // good, bad, or neutral
                 }
@@ -98,7 +98,7 @@ const getKPIs = async (req, res, next) => {
             const indicator1 = "neutral";
 
             // KPI 2 Opened
-            const kpi2 = await getNumberOfCasesClosedTech(periodicity, user_id);
+            const kpi2 = await getNumberOfCasesDELETEDTech(periodicity, user_id);
             const indicator2 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
             
             response = [
@@ -109,8 +109,8 @@ const getKPIs = async (req, res, next) => {
                     indicator: indicator1 // good, bad, or neutral
                 },
                 {
-                    title: `Cases closed ${periodicity_name}`,
-                    description: `Number of cases closed`,
+                    title: `Cases DELETED ${periodicity_name}`,
+                    description: `Number of cases DELETED`,
                     value: kpi2,
                     indicator: indicator2 // good, bad, or neutral
                 }
@@ -128,8 +128,8 @@ const getKPIs = async (req, res, next) => {
             const kpi3 = await getNumberOfCasesUnnasignedDoctor(periodicity, user_id);
             const indicator3 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
             
-            // KPI 4 Closed
-            const kpi4 = await getNumberOfCasesClosedDoctor(periodicity, user_id);
+            // KPI 4 DELETED
+            const kpi4 = await getNumberOfCasesDELETEDDoctor(periodicity, user_id);
             const indicator4 = kpi2 > 10 ? "good" : (kpi2 < 2 ? "bad" : "neutral");
             
             response = [
@@ -152,8 +152,8 @@ const getKPIs = async (req, res, next) => {
                     indicator: indicator3 // good, bad, or neutral
                 },
                 {
-                    title: `Tickets closed ${periodicity_name}`,
-                    description: "Number of cases are closed",
+                    title: `Tickets DELETED ${periodicity_name}`,
+                    description: "Number of cases are DELETED",
                     value: kpi4,
                     indicator: indicator4 // good, bad, or neutral
                 }
@@ -236,20 +236,20 @@ const getNumberOfCasesOpened = async (periodicity) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM cases
-        WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
 
@@ -280,24 +280,24 @@ const getNumberOfCasesUnnasigned = async (periodicity) => {
     const [result] = await pool.query(query);
     return result[0].count;
 }
-const getNumberOfCasesClosed = async (periodicity) => {
+const getNumberOfCasesDELETED = async (periodicity) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM cases
-        WHERE status_case_id = ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE status_case_id = ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE status_case_id = ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
 
@@ -311,24 +311,24 @@ const getNumberOfCasesClosed = async (periodicity) => {
  * @param {*} id 
  * @returns 
  */
-const getNumberOfCasesClosedTech = async (periodicity, id) => {
+const getNumberOfCasesDELETEDTech = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM cases
-        WHERE status_case_id = ${STATUS_CASE.CLOSED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE status_case_id = ${STATUS_CASE.CLOSED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE status_case_id = ${STATUS_CASE.CLOSED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
 
@@ -392,20 +392,20 @@ const getNumberOfCasesOpenedDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM cases
-        WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.CLOSED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.CLOSED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.CLOSED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
 
@@ -436,24 +436,24 @@ const getNumberOfCasesUnnasignedDoctor = async (periodicity, id) => {
     const [result] = await pool.query(query);
     return result[0].count;
 }
-const getNumberOfCasesClosedDoctor = async (periodicity, id) => {
+const getNumberOfCasesDELETEDDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM cases
-        WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
             FROM cases
-            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.CLOSED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
 
