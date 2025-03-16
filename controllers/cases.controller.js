@@ -116,7 +116,7 @@ const createCase = async (req, res, next) => {
         const [user] = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user_id]);
 
         const [caseCreated] = await pool.query(
-            'INSERT INTO cases (name, patient_name, observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO cases (name, patient_name, observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [name, patientName, additionalInfo, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]
         );
         // Subir archivo a S3
