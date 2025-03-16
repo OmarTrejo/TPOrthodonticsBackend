@@ -1,6 +1,6 @@
 const pool = require('../database/config');
 const createError = require('../utils/createError');
-import { ROLES_USER } from '../utils/constants';
+const { ROLES_USER } = require('../utils/constants');
 
 const getCountries = async (req, res, next) => {
     
@@ -76,7 +76,7 @@ const getCaseStatus = async (req, res, next) => {
     try {
         const [user] = await pool.query('SELECT id, role_id FROM users WHERE id = ? LIMIT 1', [id_user]);
         let query = "";
-        if (user[0].role_id !== ROLES_USER.DOCTOR) {
+        if (user[0].role_id == ROLES_USER.DOCTOR) {
             query = "SELECT id, status, span_color, general FROM status_case WHERE roleStatus = 1"
         }
         else {
