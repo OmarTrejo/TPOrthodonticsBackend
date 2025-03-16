@@ -1,6 +1,6 @@
 const { formattedDate } = require("../utils/dates");
 const { paginateQuery } = require('../utils/pagination');
-const { STATUS_CASE, MODULES } = require("../utils/constants");
+const { STATUS_CASE, MODULES, ROLES_USER } = require("../utils/constants");
 const { uploadFileToS3, deleteFileFromS3 } = require("../utils/aws");
 const { systemLogs } = require('../utils/systemLogs');
 const path = require('path');
@@ -16,8 +16,17 @@ const { sendNotification } = require("../utils/notifications");
  */
 const getAllCases = async (req, res, next) => {
     const { page, pageSize, ...filters } = req.query;
-
+    const userId = req.user.id;
     try {
+        const [user] = await pool.query('SELECT role_id FROM users WHERE id = ?', [userId]);
+
+        let onlyDoctor = {}
+        // If user is a Doctor, only show his cases
+        if(user[0].role_id == ROLES_USER.DOCTOR)
+        {
+            onlyDoctor = { customer_id: userId }
+        }
+
         // * Conversión y validación
         const validatedPage = parseInt(page, 10) || 1;
         const validatedPageSize = parseInt(pageSize, 10) || 10;
@@ -27,7 +36,15 @@ const getAllCases = async (req, res, next) => {
         const countQuery = "SELECT COUNT(*) AS total FROM vw_cases";
 
         // Obtener datos paginados
-        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
+        let paginatedData = "";
+        // If user is a Doctor, only show his cases
+        if(user[0].role_id == ROLES_USER.DOCTOR)
+        {
+            paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, customer_id:userId }, validatedPage, validatedPageSize);
+        }else {
+
+            paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
+        }
 
         // Formatear los resultados
         const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
