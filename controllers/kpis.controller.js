@@ -11,14 +11,14 @@ const pool = require("../database/config");
 
 const getKPIs = async (req, res, next) => {
     const user_id = req.user.id;
-    const periodicity = req.query.periodicity;
-
+    const periodicity = parseInt(req.query.periodicity);
+    // console.log(typeof(periodicity))
     // Last 7, this month, this year
     // 1. This year
     // 2. This month
     // 3. This last 7 days
 
-    let periodicity_name = "";
+    let periodicity_name = ""; 
 
     if(periodicity === 1) 
     {
@@ -30,7 +30,7 @@ const getKPIs = async (req, res, next) => {
     }
     else if(periodicity === 3)
     {
-        periodicity_name = "last 7 days";
+        periodicity_name = "in the last 7 days";
     }
     else
     {
@@ -152,7 +152,7 @@ const getKPIs = async (req, res, next) => {
                     indicator: indicator3 // good, bad, or neutral
                 },
                 {
-                    title: `Tickets DELETED ${periodicity_name}`,
+                    title: `Cases DELETED ${periodicity_name}`,
                     description: "Number of cases are DELETED",
                     value: kpi4,
                     indicator: indicator4 // good, bad, or neutral
