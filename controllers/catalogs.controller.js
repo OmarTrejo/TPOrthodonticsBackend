@@ -57,12 +57,13 @@ const getTypeCase = async (req, res, next) => {
 
 const getDCs = async (req, res, next) => {
     try {
-        const [rows] = await pool.query('SELECT id, name, commun_name FROM dc WHERE status = 1');
+        const [rows] = await pool.query('SELECT id, country FROM countries WHERE status = 1');
+        console.log(rows)
         const filteredResponse = rows.map((item) => {
             return {
                 id: item.id,
-                name: item.name,
-                commonName: item.commun_name
+                name: item.country,
+                commonName: item.country
             };
         })
         res.status(200).json(filteredResponse);

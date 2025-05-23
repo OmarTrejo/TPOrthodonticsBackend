@@ -38,53 +38,40 @@ const getAll = async (req, res, next) => {
 
     try {
         // * Conversión y validación
-        // const validatedPage = parseInt(page, 10) || 1;
-        // const validatedPageSize = parseInt(pageSize, 10) || 10;
+        const validatedPage = parseInt(page, 10) || 1;
+        const validatedPageSize = parseInt(pageSize, 10) || 10;
 
-        // // * SQL Query base
-        // const baseQuery = "SELECT * FROM countries";
-        // const countQuery = "SELECT COUNT(*) AS total FROM countries";
+        // * SQL Query base
+        const baseQuery = "SELECT * FROM countries";
+        const countQuery = "SELECT COUNT(*) AS total FROM countries";
+
+        if (filters.name) {
+            filters.country = filters.name;
+            delete filters.name;
+        }
 
         // Obtener datos paginados
-        const [rows] = await pool.query('SELECT id, country, iso FROM countries WHERE status = 1');
-        const filteredResponse = rows.map((item) => {
-            return {
-                id: item.id,
-                name: item.country,
-                iso: item.iso,
-            }
-        })
-        
+        const paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
 
         // Formatear los resultados
-        // const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
+        const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
 
-        //     const [country] = await pool.query('SELECT country, iso, status FROM countries WHERE id = ? LIMIT 1', [item.id_country]);
-
-        //     return {
-        //         // id: item.id,
-        //         // name: item.name,
-        //         // commonName: item.commun_name,
-        //         country: {
-        //             id: country[0].id,
-        //             name: country[0].country,
-        //             iso: country[0].iso,
-        //         },
-        //         // state: item.state_province,
-        //         // city: item.city,
-        //         // address: item.address,
-        //         // status: Boolean(item.status)
-        //     };
-        // })
-    
+           return {
+                id: item.id,
+                name: item.country,
+                commonName: item.country,
+                status: Boolean(item.status)
+            };
+        })
+    );
 
         // Construir la respuesta
-        // const response = {
-        //     ...paginatedData,
-        //     results: filteredResponse,
-        // };
+        const response = {
+            ...paginatedData,
+            results: filteredResponse,
+        };
 
-        res.status(200).json(filteredResponse);
+        res.status(200).json(response);
     } catch (error) {
         next(error)
     }
@@ -93,31 +80,31 @@ const getAll = async (req, res, next) => {
 const getById = async (req, res, next) => {
     const { id } = req.params;
     try {
-        // const [rows] = await pool.query('SELECT id, name, commun_name, country_id, state_province, city, address, status FROM dc WHERE id = ?', [id]);
+        const [rows] = await pool.query('SELECT id, name, commun_name, country_id, state_province, city, address, status FROM dc WHERE id = ?', [id]);
 
-        // if (rows.length === 0) {
-        //     const error = createError(
-        //         "Country DC not found", // Mensaje de error
-        //         ["Id incorrect"], // Detalles
-        //         req.traceId, // TraceId (si lo tienes)
-        //         req.originalUrl // URL de la solicitud
-        //     );
-        //     return next(error); // Pasa el error al middleware de manejo de errores
-        // }
+        if (rows.length === 0) {
+            const error = createError(
+                "Country DC not found", // Mensaje de error
+                ["Id incorrect"], // Detalles
+                req.traceId, // TraceId (si lo tienes)
+                req.originalUrl // URL de la solicitud
+            );
+            return next(error); // Pasa el error al middleware de manejo de errores
+        }
 
-        const [country] = await pool.query('SELECT id, country, iso, status FROM countries WHERE id = ? LIMIT 1', [id]);
+        const [country] = await pool.query('SELECT country, iso, status FROM countries WHERE id = ? LIMIT 1', [rows[0].country_id]);
 
         // *Filtered response
         const response = {
-            // id: rows[0].id,
-            // name: rows[0].name,
-            // commonName: rows[0].commun_name,
-            // state: rows[0].state_province,
-            // city: rows[0].city,
-            // address: rows[0].address,
-            // status: Boolean(rows[0].status),
+            id: rows[0].id,
+            name: rows[0].name,
+            commonName: rows[0].commun_name,
+            state: rows[0].state_province,
+            city: rows[0].city,
+            address: rows[0].address,
+            status: Boolean(rows[0].status),
             country: {
-                id: country[0].id,
+                id: rows[0].country_id,
                 name: country[0].country,
                 iso: country[0].iso,
             }

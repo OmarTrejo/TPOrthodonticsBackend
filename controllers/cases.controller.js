@@ -35,17 +35,71 @@ const getAllCases = async (req, res, next) => {
         const baseQuery = "SELECT * FROM vw_cases";
         const countQuery = "SELECT COUNT(*) AS total FROM vw_cases";
 
-        // Obtener datos paginados
-        let paginatedData = "";
-        // If user is a Doctor, only show his cases
-        if(user[0].role_id == ROLES_USER.DOCTOR)
-        {
-            paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, customer_id:userId }, validatedPage, validatedPageSize);
-        }else {
+        // Validación de los filtros de periodicity:
+        // Copia segura
+        let transformedFilters = { ...filters };
 
-            paginatedData = await paginateQuery(baseQuery, countQuery, filters, validatedPage, validatedPageSize);
+        // statusId → status_case_id
+        // Procesar statusId primero
+        if (transformedFilters.statusId !== undefined) {
+            const statusId = parseInt(transformedFilters.statusId, 10);
+            if (statusId === 0) {
+                // Excluir 12 y 20 porque 0 significa "todos menos esos"
+                transformedFilters.excludeStatuses = [12, 20];
+                delete transformedFilters.status_case_id;
+            } else {
+                // statusId específico: mostrar solo ese status
+                transformedFilters.status_case_id = statusId;
+                delete transformedFilters.excludeStatuses;  // asegurar que no exista excludeStatuses
+            }
+            delete transformedFilters.statusId;
         }
 
+        // Procesar periodicity
+        if (transformedFilters.periodicity) {
+            const periodicity = parseInt(transformedFilters.periodicity, 10);
+            const now = new Date();
+            let fromDate;
+
+            if (periodicity === 1) {
+                fromDate = new Date(now.getFullYear(), 0, 1);
+            } else if (periodicity === 2) {
+                fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            } else if (periodicity === 3) {
+                fromDate = new Date(now);
+                fromDate.setDate(fromDate.getDate() - 7);
+            }
+
+            const formattedDate = fromDate.toISOString().slice(0, 19).replace('T', ' ');
+            transformedFilters.created_at_from = formattedDate;
+
+            // Solo agregar excludeStatuses de periodicity si no hay status_case_id definido
+            if (!transformedFilters.status_case_id) {
+                transformedFilters.excludeStatuses = [
+                    STATUS_CASE.UNNASIGNED,
+                    STATUS_CASE.CANCELLED,
+                    STATUS_CASE.DELETED
+                ];
+            }
+
+            delete transformedFilters.periodicity;
+        }
+
+
+
+        // Obtener datos paginados
+        const filtersToUse = { ...transformedFilters };
+        if (user[0].role_id == ROLES_USER.DOCTOR) {
+            filtersToUse.customer_id = userId;
+        }
+
+        const paginatedData = await paginateQuery(
+            baseQuery,
+            countQuery,
+            filtersToUse,
+            validatedPage,
+            validatedPageSize
+        );
         // Formatear los resultados
         const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
 
@@ -57,7 +111,6 @@ const getAllCases = async (req, res, next) => {
 
             // Get organization
             const [organization] = await pool.query('SELECT id, country FROM countries WHERE id = ? LIMIT 1', [item.organization_id]);
-            console.log(organization)
             // Get doctor
             const [doctor] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [item.customer_id]);
 
