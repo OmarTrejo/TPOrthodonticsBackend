@@ -50,10 +50,6 @@ const getKPIs = async (req, res, next) => {
 
         if (user.role_id === ROLES_USER.ADMIN) {
 
-            // KPI 1 Total
-            const kpi1 = await getNumberOfCases(periodicity);
-            const indicator1 = kpi1 > 3 ? "good" : (kpi1 < 3 ? "bad" : "neutral");
-
             // KPI 2 Opened
             const kpi2 = await getNumberOfCasesOpened(periodicity);
             const indicator2 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
@@ -68,28 +64,25 @@ const getKPIs = async (req, res, next) => {
             
             response = [
                 {
-                    title: `Cases created ${periodicity_name}`,
-                    description: `Number of cases register`,
-                    value: kpi1,
-                    indicator: indicator1 // good, bad, or neutral
-                },
-                {
                     title: `Cases opened ${periodicity_name}`,
                     description: `Number of cases opened`,
                     value: kpi2,
-                    indicator: indicator2 // good, bad, or neutral
+                    indicator: indicator2, // good, bad, or neutral
+                    statusId: 0
                 },
                 {
                     title: `Cases unnasigned ${periodicity_name}`,
                     description: `Number of cases not assidned to tech `,
                     value: kpi3,
-                    indicator: indicator3 // good, bad, or neutral
+                    indicator: indicator3, // good, bad, or neutral
+                    statusId: STATUS_CASE.UNNASIGNED
                 },
                 {
                     title: `Cases DELETED ${periodicity_name}`,
                     description: "Number of cases are DELETED",
                     value: kpi4,
-                    indicator: indicator4 // good, bad, or neutral
+                    indicator: indicator4, // good, bad, or neutral
+                    statusId: STATUS_CASE.DELETED
                 }
             ];
         } else if (user.role_id === ROLES_USER.TECH) {
@@ -106,20 +99,18 @@ const getKPIs = async (req, res, next) => {
                     title: `Cases assigned ${periodicity_name}`,
                     description: `Number of cases assigned`,
                     value: kpi1,
-                    indicator: indicator1 // good, bad, or neutral
+                    indicator: indicator1, // good, bad, or neutral
+                    statusId: 0
                 },
                 {
                     title: `Cases DELETED ${periodicity_name}`,
                     description: `Number of cases DELETED`,
                     value: kpi2,
-                    indicator: indicator2 // good, bad, or neutral
+                    indicator: indicator2, // good, bad, or neutral
+                    statusId: STATUS_CASE.DELETED
                 }
             ];
         } else if (user.role_id === ROLES_USER.DOCTOR) {
-            // KPI 1 Total
-            const kpi1 = await getNumberOfCasesDoctor(periodicity, user_id);
-            const indicator1 = kpi1 > 3 ? "good" : (kpi1 < 3 ? "bad" : "neutral");
-
             // KPI 2 Opened
             const kpi2 = await getNumberOfCasesOpenedDoctor(periodicity, user_id);
             const indicator2 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
@@ -134,28 +125,25 @@ const getKPIs = async (req, res, next) => {
             
             response = [
                 {
-                    title: `Cases created ${periodicity_name}`,
-                    description: `Number of cases register`,
-                    value: kpi1,
-                    indicator: indicator1 // good, bad, or neutral
-                },
-                {
                     title: `Cases opened ${periodicity_name}`,
                     description: `Number of cases opened`,
                     value: kpi2,
-                    indicator: indicator2 // good, bad, or neutral
+                    indicator: indicator2, // good, bad, or neutral
+                    statusId: 0
                 },
                 {
                     title: `Cases unnasigned ${periodicity_name}`,
                     description: `Number of cases not assidned to tech `,
                     value: kpi3,
-                    indicator: indicator3 // good, bad, or neutral
+                    indicator: indicator3,// good, bad, or neutral
+                    statusId: STATUS_CASE.UNNASIGNED
                 },
                 {
                     title: `Cases DELETED ${periodicity_name}`,
                     description: "Number of cases are DELETED",
                     value: kpi4,
-                    indicator: indicator4 // good, bad, or neutral
+                    indicator: indicator4, // good, bad, or neutral
+                    statusId: STATUS_CASE.DELETED
                 }
             ];
         } else {

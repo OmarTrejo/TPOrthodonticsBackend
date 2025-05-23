@@ -26,7 +26,7 @@ const getMyAccount = async (req, res, next) => {
 
         const [role] = await pool.query('SELECT id, role_name, status FROM role_user WHERE id = ? LIMIT 1', [user.role_id]);
 
-        const [organization] = await pool.query('SELECT * FROM vw_dcs WHERE id = ? LIMIT 1', [user.dc_id]);
+        const [organization] = await pool.query('SELECT * FROM countries WHERE id = ? LIMIT 1', [user.dc_id]);
 
         const [conf] = await pool.query('SELECT * FROM vw_configurations WHERE user_id = ? LIMIT 1', [id]);
 
@@ -77,17 +77,17 @@ const getMyAccount = async (req, res, next) => {
             },
             organization: {
                 id: user.dc_id,
-                name: organization[0].name,
-                commonName: organization[0].commun_name,
-                state: organization[0].state_province,
-                city: organization[0].city,
-                address: organization[0].address,
-                status: Boolean(organization[0].status),
-                country: {
-                    id: organization[0].id_country,
-                    name: organization[0].country,
-                    isoCode: organization[0].iso
-                }
+                name: organization[0].country,
+                commonName: organization[0].country,
+                // state: organization[0].state_province,
+                // city: organization[0].city,
+                // address: organization[0].address,
+                // status: Boolean(organization[0].status),
+                // country: {
+                //     id: organization[0].id_country,
+                //     name: organization[0].country,
+                //     isoCode: organization[0].iso
+                // }
             },
             notifyByEmail: Boolean(notifications.email_enabled),
             notifyByWhatsApp: Boolean(notifications.whatsapp),

@@ -390,7 +390,7 @@ async function getRole(role_id) {
 async function getCountry(organization_id) {
 
     try {
-        const [organization] = await pool.query(`SELECT * FROM dc WHERE id = ? LIMIT 1`, [organization_id]);
+        const [organization] = await pool.query(`SELECT * FROM countries WHERE id = ? LIMIT 1`, [organization_id]);
 
         // Validar si el role tiene datos
         if (organization.length === 0) {
@@ -399,8 +399,8 @@ async function getCountry(organization_id) {
 
         const response = {
             id: organization[0].id,
-            name: organization[0].name,
-            commonName: organization[0].commun_name,
+            name: organization[0].country,
+            commonName: organization[0].country,
             status: Boolean(organization[0].status),
         };
 

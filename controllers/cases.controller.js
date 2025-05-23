@@ -56,8 +56,8 @@ const getAllCases = async (req, res, next) => {
             const [caseStatus] = await pool.query('SELECT id, status, span_color, general FROM status_case WHERE id = ? LIMIT 1', [item.status_case_id]);
 
             // Get organization
-            const [organization] = await pool.query('SELECT id, name FROM dc WHERE id = ? LIMIT 1', [item.organization_id]);
-
+            const [organization] = await pool.query('SELECT id, country FROM countries WHERE id = ? LIMIT 1', [item.organization_id]);
+            console.log(organization)
             // Get doctor
             const [doctor] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [item.customer_id]);
 
@@ -95,7 +95,11 @@ const getAllCases = async (req, res, next) => {
                     name: treatmentType[0].type_name,
                     id: treatmentType[0].id
                 },
-                organization: organization[0],
+                organization: {
+                    id: organization[0].id,
+                    name: organization[0].country,
+                    commonName: organization[0].country,
+                },
                 doctor: {
                     id: doctor[0].id,
                     fullName: doctor[0].fullname
@@ -247,7 +251,7 @@ const updateOrderNumber = async (req, res, next) => {
 
 const assignedCase = async (req, res, next) => {
     const { id } = req.params;
-    const techId = req.user.id;
+    const { techId } = req.body;
 
     try {
         // Update case with id
@@ -520,7 +524,7 @@ const getCaseById = async (req, res, next) => {
         const [caseStatus] = await pool.query('SELECT id, status, span_color FROM status_case WHERE id = ? LIMIT 1', [caseData.status_case_id]);
 
         // Get organization
-        const [organization] = await pool.query('SELECT id, name FROM dc WHERE id = ? LIMIT 1', [caseData.organization_id]);
+        const [organization] = await pool.query('SELECT id, country FROM countries WHERE id = ? LIMIT 1', [caseData.organization_id]);
 
         // Get doctor
         const [doctor] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [caseData.customer_id]);
@@ -558,7 +562,11 @@ const getCaseById = async (req, res, next) => {
                 name: treatmentType[0].type_name,
                 id: treatmentType[0].id
             },
-            organization: organization[0],
+            organization: {
+                id: organization[0].id,
+                name: organization[0].country,
+                commonName: organization[0].country,
+            },
             doctor: {
                 id: doctor[0].id,
                 fullName: doctor[0].fullname
