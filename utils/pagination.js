@@ -45,6 +45,10 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
                 strictConditions.push("userId != ?");
                 filterValuesStrict.push(filters.userId);
             }
+            if (filters.hasOwnProperty('role_id')) {
+                strictConditions.push("role_id = ?");
+                filterValuesStrict.push(filters.role_id);
+            }
 
             if (filters.excludeStatuses) {
                 const placeholders = filters.excludeStatuses.map(() => '?').join(', ');
@@ -62,7 +66,7 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
             // Aquí iteramos todos los filtros restantes para flexibleConditions
             Object.keys(filters).forEach((key) => {
                 // Excluir las keys ya manejadas como estrictas
-                if (key !== 'is_deleted' && key !== 'userId' && key !== 'seen' && key !== 'excludeStatuses') {
+                if (key !== 'is_deleted' && key !== 'userId' && key !== 'seen' && key !== 'excludeStatuses' && key !== 'role_id') {
                     // Caso especial para created_at_from
                     if (key === 'created_at_from') {
                         flexibleConditions.push(`created_at >= ?`);
