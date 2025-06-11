@@ -241,6 +241,7 @@ const getNumberOfCasesOpened = async (periodicity) => {
         `;
     }
 
+    console.log(query)
     const [result] = await pool.query(query);
     return result[0].count;
 }
@@ -264,7 +265,7 @@ const getNumberOfCasesUnnasigned = async (periodicity) => {
             WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
-
+    console.log(query)
     const [result] = await pool.query(query);
     return result[0].count;
 }
@@ -288,7 +289,7 @@ const getNumberOfCasesDELETED = async (periodicity) => {
             WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
-
+console.log(query)
     const [result] = await pool.query(query);
     return result[0].count;
 }
