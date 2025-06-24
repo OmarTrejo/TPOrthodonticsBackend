@@ -177,7 +177,7 @@ const getAllCases = async (req, res, next) => {
 
 const createCase = async (req, res, next) => {
     try {
-        const { name, patientName, additionalInfo, treatmentTypeId } = req.body;
+        const { name, patientName, additionalInfo, treatmentTypeId, requireRevision } = req.body;
         const user_id = req.user.id; // Doctor
 
         // Get treatmentType
@@ -190,8 +190,8 @@ const createCase = async (req, res, next) => {
         const [user] = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user_id]);
 
         const [caseCreated] = await pool.query(
-            'INSERT INTO cases (name, patient_name, observations, type_case_id, customer_id, status_case_id, organization_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [name, patientName, additionalInfo, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id]
+            'INSERT INTO cases (name, patient_name, observations, type_case_id, customer_id, status_case_id, organization_id, require_revision) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [name, patientName, additionalInfo, treatmentTypeId, user_id, STATUS_CASE.UNNASIGNED, user[0].dc_id, requireRevision]
         );
         // Subir archivo a S3
         try {
@@ -608,6 +608,7 @@ const getCaseById = async (req, res, next) => {
                 general: caseStatus[0].general,
             },
             additionalInfo: caseData.observations,
+            requireRevision: caseData.require_revision,
             orderNumber: caseData.order_number,
             viewerUrl: caseData.url_viewer,
             isDeleted: Boolean(caseData.is_deleted),
