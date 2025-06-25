@@ -199,20 +199,20 @@ const getKPIs = async (req, res, next) => {
 const getNumberOfCases = async (periodicity) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -223,20 +223,20 @@ const getNumberOfCases = async (periodicity) => {
 const getNumberOfCasesOpened = async (periodicity) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -248,20 +248,20 @@ const getNumberOfCasesOpened = async (periodicity) => {
 const getNumberOfCasesUnnasigned = async (periodicity) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -272,20 +272,20 @@ const getNumberOfCasesUnnasigned = async (periodicity) => {
 const getNumberOfCasesDELETED = async (periodicity) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -303,20 +303,20 @@ console.log(query)
 const getNumberOfCasesDELETEDTech = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -327,20 +327,20 @@ const getNumberOfCasesDELETEDTech = async (periodicity, id) => {
 const getNumberOfCasesAssignedTech = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -356,20 +356,20 @@ const getNumberOfCasesAssignedTech = async (periodicity, id) => {
 const getNumberOfCasesDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE customer_id = ${id} AND  created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE customer_id = ${id} AND  created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE customer_id = ${id} AND  created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -380,20 +380,20 @@ const getNumberOfCasesDoctor = async (periodicity, id) => {
 const getNumberOfCasesOpenedDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -404,20 +404,20 @@ const getNumberOfCasesOpenedDoctor = async (periodicity, id) => {
 const getNumberOfCasesUnnasignedDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -428,20 +428,20 @@ const getNumberOfCasesUnnasignedDoctor = async (periodicity, id) => {
 const getNumberOfCasesDELETEDDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
-        FROM cases
+        FROM vw_cases
         WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
-            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            FROM vw_cases
+            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
-            FROM cases
+            FROM vw_cases
             WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
@@ -464,7 +464,7 @@ const getTotalAccessRequests= async (periodicity, id) => {
         query = `
             SELECT COUNT(*) AS count
             FROM request_user
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            WHERE created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
@@ -489,7 +489,7 @@ const getTotalAccessRequestsApproved = async (periodicity, id) => {
         query = `
             SELECT COUNT(*) AS count
             FROM logs_system
-            WHERE user_id = ${id} AND action like '%Requests access has been approved%' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            WHERE user_id = ${id} AND action like '%Requests access has been approved%' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
@@ -515,7 +515,7 @@ const ggetTotalAccessRequestsDenied= async (periodicity, id) => {
         query = `
             SELECT COUNT(*) AS count
             FROM logs_system
-            WHERE user_id = ${id} AND action like '%Request Access has been denied%' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            WHERE user_id = ${id} AND action like '%Request Access has been denied%' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
