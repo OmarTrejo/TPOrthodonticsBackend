@@ -2,7 +2,7 @@ const { response } = require('express');
 const pool = require("../database/config.js");
 const { generateTempPassword, encryptPassword } = require('../utils/password.js');
 const { formattedDate } = require('../utils/dates.js');
-const { STATUS_USER, MODULES, TABLE_MAPPING } = require('../utils/constants.js');
+const { STATUS_USER, MODULES, TABLE_MAPPING, ROLES_USER } = require('../utils/constants.js');
 const { sendWelcomeEmail } = require('../utils/email.js');
 const { paginateQuery } = require('../utils/pagination');
 const { systemLogs } = require('../utils/systemLogs.js');
@@ -71,8 +71,21 @@ const getUsers = async (req, res, next) => {
         const baseQuery = "SELECT * FROM vw_users";
         const countQuery = "SELECT COUNT(*) AS total FROM vw_users";
 
-        // Obtener datos paginados
-        const paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, userId:user_id}, validatedPage, validatedPageSize);
+        // Si la solicitud es del role tech, se mandan todos los usuarios
+        const [user] = await pool.query('SELECT role_id FROM users WHERE id = ?', [user_id]);
+
+        let paginatedData;
+
+        // If user is a Doctor, only show his cases
+        if(user[0].role_id == ROLES_USER.TECH)
+        {
+            // Obtener datos paginados
+            paginatedData = await paginateQuery(baseQuery, countQuery, {...filters}, validatedPage, validatedPageSize);
+        }
+        else
+        {
+            paginatedData = await paginateQuery(baseQuery, countQuery, {...filters, userId:user_id}, validatedPage, validatedPageSize);
+        }        
 
         // Formatear los resultados
         const filteredResponse = await Promise.all(paginatedData.results.map(async (item) => {
