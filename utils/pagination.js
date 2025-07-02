@@ -13,6 +13,7 @@ const pool = require('../database/config');
 
 const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, orderBy = {}) => {
     try {
+
         if (page < 1 || pageSize < 1) {
             throw new Error('Los parámetros page y pageSize deben ser mayores a 0');
         }
@@ -36,6 +37,14 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
             if (filters.hasOwnProperty('is_deleted')) {
                 strictConditions.push("is_deleted = ?");
                 filterValuesStrict.push(filters.is_deleted);
+            }
+            if (filters.hasOwnProperty('customer_id')) {
+                strictConditions.push("customer_id = ?");
+                filterValuesStrict.push(filters.customer_id);
+            }
+            if (filters.hasOwnProperty('tech_id')) {
+                strictConditions.push("tech_id = ?");
+                filterValuesStrict.push(filters.tech_id);
             }
             if (filters.hasOwnProperty('seen')) {
                 strictConditions.push("seen = ?");
@@ -66,7 +75,7 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
             // Aquí iteramos todos los filtros restantes para flexibleConditions
             Object.keys(filters).forEach((key) => {
                 // Excluir las keys ya manejadas como estrictas
-                if (key !== 'is_deleted' && key !== 'userId' && key !== 'seen' && key !== 'excludeStatuses' && key !== 'role_id') {
+                if (key !== 'is_deleted' && key !== 'userId' && key !== 'seen' && key !== 'excludeStatuses' && key !== 'role_id' && key !== 'customer_id' && key !== 'tech_id') {
                     // Caso especial para created_at_from
                     if (key === 'created_at_from') {
                         flexibleConditions.push(`created_at >= ?`);
@@ -99,7 +108,7 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
 
         const finalFilterValues = [...filterValuesStrict, ...filterValuesFlexible, pageSize, offset];
 
-        console.log(`${baseQuery}${whereClause}${orderByClause} LIMIT ? OFFSET ?`, finalFilterValues);
+        // console.log(`${baseQuery}${whereClause}${orderByClause} LIMIT ? OFFSET ?`, finalFilterValues);
 
         const [rows] = await pool.query(
             `${baseQuery}${whereClause}${orderByClause} LIMIT ? OFFSET ?`,

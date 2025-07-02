@@ -1,11 +1,11 @@
 const sgMail = require('@sendgrid/mail');
 const fs = require('fs');
 const path = require('path');
+const transporter = require('./emailClient');
 
-// Init SENDGRID
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 // Create baseURL
 const BASE_URL = process.env.BASE_URL;
+
 
 // Función para realizar múltiples reemplazos
 const replacePlaceholders = (html, replacements) => {
@@ -17,200 +17,143 @@ const replacePlaceholders = (html, replacements) => {
     return result;
 };
 
-// SEND Welcome email
+// Función base para enviar correo con SES
+const buildEmailOptions = (to, subject, htmlContent) => ({
+  from: `"TPOrthodontics" <${process.env.SES_EMAIL_FROM}>`,
+  to,
+  subject,
+  html: htmlContent,
+  attachments: [
+    {
+      filename: "logo.png",
+      content: fs.readFileSync("./utils/email/logo.png").toString("base64"),
+      encoding: "base64",
+      cid: "logo_image",
+    },
+  ],
+});
+
+
 const sendWelcomeEmail = async (to, fullname, password, token) => {
-    
+  const html = fs.readFileSync(
+    path.join(__dirname, "./email/welcomeEmail.html"),
+    "utf8"
+  );
 
-    // Leer el archivo HTML
-    const htmlContent = fs.readFileSync(path.join(__dirname, './email/welcomeEmail.html'), 'utf8');
+  const htmlReplaced = replacePlaceholders(html, {
+    fullname,
+    to,
+    password,
+    token,
+    BASE_URL,
+  });
 
-    // Crear un objeto con los valores que deseas reemplazar
-    const replacements = {
-        fullname,
-        to,
-        password,
-        token,
-        BASE_URL,
-    };
+  const mailOptions = buildEmailOptions(
+    to,
+    "Welcome to TPOrthodontics",
+    htmlReplaced
+  );
 
-    // Reemplazar todas las variables en el HTML
-    const personalizedHtml = replacePlaceholders(htmlContent, replacements);
-
-    const msg = {
-        to,
-        from: process.env.SENDGRID_EMAIL,
-        subject: "Welcome to TPOrthodontics",
-        html: personalizedHtml,
-        attachments: [
-            {
-                filename: 'logo.png',
-                content: fs.readFileSync('./utils/email/logo.png').toString('base64'),
-                type: 'image/png',
-                disposition: 'inline',
-                content_id: 'logo_image'
-            }
-        ]
-    };
-
-    try {
-        await sgMail.send(msg);
-    } catch (error) {
-        logger.error('Error to update logs, Please try again later.');
-    }
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Error sending welcome email:", err);
+  }
 };
 
-// Send email to wait authorization
 const sendAccessRequestEmail = async (to, fullname) => {
-    // Leer el archivo HTML
-    const htmlContent = fs.readFileSync(path.join(__dirname, './email/accessRequestEmail.html'), 'utf8');
+  const html = fs.readFileSync(
+    path.join(__dirname, "./email/accessRequestEmail.html"),
+    "utf8"
+  );
 
-    // Crear un objeto con los valores que deseas reemplazar
-    const replacements = {
-        fullname
-    };
+  const htmlReplaced = replacePlaceholders(html, { fullname });
 
-    // Reemplazar todas las variables en el HTML
-    const personalizedHtml = replacePlaceholders(htmlContent, replacements);
+  const mailOptions = buildEmailOptions(
+    to,
+    "Your platform access request is being processed",
+    htmlReplaced
+  );
 
-    const msg = {
-        to,
-        from: process.env.SENDGRID_EMAIL,
-        subject: "Your platform access request is being processed",
-        html: personalizedHtml,
-        attachments: [
-            {
-                filename: 'logo.png',
-                content: fs.readFileSync('./utils/email/logo.png').toString('base64'),
-                type: 'image/png',
-                disposition: 'inline',
-                content_id: 'logo_image'
-            }
-        ]
-    };
-
-    try {
-        await sgMail.send(msg);
-    } catch (error) {
-        logger.error('Error to update logs, Please try again later.');
-    }
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Error sending access request email:", err);
+  }
 };
 
-// Send email to wait authorization
 const sendAccessRequestDenyEmail = async (to, fullname) => {
-    // Leer el archivo HTML
-    const htmlContent = fs.readFileSync(path.join(__dirname, './email/denyAccessRequests.html'), 'utf8');
+  const html = fs.readFileSync(
+    path.join(__dirname, "./email/denyAccessRequests.html"),
+    "utf8"
+  );
 
-    // Crear un objeto con los valores que deseas reemplazar
-    const replacements = {
-        fullname
-    };
+  const htmlReplaced = replacePlaceholders(html, { fullname });
 
-    // Reemplazar todas las variables en el HTML
-    const personalizedHtml = replacePlaceholders(htmlContent, replacements);
+  const mailOptions = buildEmailOptions(
+    to,
+    "Your platform access request has been denied",
+    htmlReplaced
+  );
 
-    const msg = {
-        to,
-        from: process.env.SENDGRID_EMAIL,
-        subject: "Your platform access request has been denied",
-        html: personalizedHtml,
-        attachments: [
-            {
-                filename: 'logo.png',
-                content: fs.readFileSync('./utils/email/logo.png').toString('base64'),
-                type: 'image/png',
-                disposition: 'inline',
-                content_id: 'logo_image'
-            }
-        ]
-    };
-
-    try {
-        await sgMail.send(msg);
-    } catch (error) {
-        logger.error('Error to update logs, Please try again later.');
-    }
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Error sending deny email:", err);
+  }
 };
 
-// SEND Welcome email
 const sendAccessRequestApprovedEmail = async (to, fullname) => {
+  const html = fs.readFileSync(
+    path.join(__dirname, "./email/approvedAccessRequests.html"),
+    "utf8"
+  );
 
-    // Leer el archivo HTML
-    const htmlContent = fs.readFileSync(path.join(__dirname, './email/approvedAccessRequests.html'), 'utf8');
+  const htmlReplaced = replacePlaceholders(html, {
+    fullname,
+    BASE_URL,
+  });
 
-    // Crear un objeto con los valores que deseas reemplazar
-    const replacements = {
-        fullname,
-        BASE_URL
-    };
+  const mailOptions = buildEmailOptions(
+    to,
+    "Your Access Request Has Been Approved",
+    htmlReplaced
+  );
 
-    // Reemplazar todas las variables en el HTML
-    const personalizedHtml = replacePlaceholders(htmlContent, replacements);
-
-    const msg = {
-        to,
-        from: process.env.SENDGRID_EMAIL,
-        subject: "Your Access Request Has Been Approved",
-        html: personalizedHtml,
-        attachments: [
-            {
-                filename: 'logo.png',
-                content: fs.readFileSync('./utils/email/logo.png').toString('base64'),
-                type: 'image/png',
-                disposition: 'inline',
-                content_id: 'logo_image'
-            }
-        ]
-    };
-
-    try {
-        await sgMail.send(msg);
-    } catch (error) {
-        logger.error('Error to update logs, Please try again later.');
-    }
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Error sending approval email:", err);
+  }
 };
 
-/**
- * TODO Send email to recovery password
- * @param {*} to 
- * @param {*} fullname 
- */
-const sendEmailForgotPassword = async(to, fullname, password, token) => {
-    // Leer el archivo HTML
-    const htmlContent = fs.readFileSync(path.join(__dirname, './email/forgotPasswordEmail.html'), 'utf8');
-    
-    // Crear un objeto con los valores que deseas reemplazar
-    const replacements = {
-        fullname,
-        temp_password: password,
-        recovery_token: token,
-        BASE_URL
-    };
-    
-    // Reemplazar todas las variables en el HTML
-    const personalizedHtml = replacePlaceholders(htmlContent, replacements);
-    
-    const msg = {
-        to,
-        from: process.env.SENDGRID_EMAIL,
-        subject: "Password Reset Request - TPRX",
-        html: personalizedHtml,
-        attachments: [
-            {
-                filename: 'logo.png',
-                content: fs.readFileSync('./utils/email/logo.png').toString('base64'),
-                type: 'image/png',
-                disposition: 'inline',
-                content_id: 'logo_image'
-            }
-        ]
-    };
-    
-    try {
-        await sgMail.send(msg);
-    } catch (error) {
-        logger.error('Error to update logs, Please try again later.');
-    }
-    }
+const sendEmailForgotPassword = async (to, fullname, password, token) => {
+  const html = fs.readFileSync(
+    path.join(__dirname, "./email/forgotPasswordEmail.html"),
+    "utf8"
+  );
+
+  const htmlReplaced = replacePlaceholders(html, {
+    fullname,
+    temp_password: password,
+    recovery_token: token,
+    BASE_URL,
+  });
+
+  const mailOptions = buildEmailOptions(
+    to,
+    "Password Reset Request - TPRX",
+    htmlReplaced
+  );
+
+  try {
+    const response = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", response.messageId);
+  } catch (err) {
+    console.error("Error sending password reset email:", err);
+  }
+};
+
 
 module.exports = {
     sendWelcomeEmail,

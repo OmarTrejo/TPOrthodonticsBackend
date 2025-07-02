@@ -284,6 +284,8 @@ const forgotPassword = async( req, res, next) => {
         // Generate a temp password
         const tempPassword = generateTempPassword(10);
 
+        console.log("1st password:",tempPassword)
+
         // Generate a token with 8 numbers
         const token = Math.floor(10000000 + Math.random() * 90000000).toString();
 
@@ -295,7 +297,7 @@ const forgotPassword = async( req, res, next) => {
 
         // Send email notification
         sendEmailForgotPassword(email, user.fullname, tempPassword, token)
-
+        console.log("2nd password:",tempPassword)
         // * Response the application
         return res.status(200).json({message: 'Request to recovery password sent successfully.'});
 

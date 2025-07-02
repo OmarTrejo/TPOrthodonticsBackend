@@ -20,13 +20,6 @@ const getAllCases = async (req, res, next) => {
     try {
         const [user] = await pool.query('SELECT role_id FROM users WHERE id = ?', [userId]);
 
-        let onlyDoctor = {}
-        // If user is a Doctor, only show his cases
-        if(user[0].role_id == ROLES_USER.DOCTOR)
-        {
-            onlyDoctor = { customer_id: userId }
-        }
-
         // * Conversión y validación
         const validatedPage = parseInt(page, 10) || 1;
         const validatedPageSize = parseInt(pageSize, 10) || 10;
@@ -91,6 +84,10 @@ const getAllCases = async (req, res, next) => {
         const filtersToUse = { ...transformedFilters };
         if (user[0].role_id == ROLES_USER.DOCTOR) {
             filtersToUse.customer_id = userId;
+        }
+
+        if (user[0].role_id == ROLES_USER.TECH) {
+            filtersToUse.tech_id = userId;
         }
 
         const paginatedData = await paginateQuery(

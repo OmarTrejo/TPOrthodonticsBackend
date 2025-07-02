@@ -224,24 +224,23 @@ const getNumberOfCasesOpened = async (periodicity) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
             FROM vw_cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
             FROM vw_cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
 
-    console.log(query)
     const [result] = await pool.query(query);
     return result[0].count;
 }
@@ -265,7 +264,6 @@ const getNumberOfCasesUnnasigned = async (periodicity) => {
             WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
-    console.log(query)
     const [result] = await pool.query(query);
     return result[0].count;
 }
@@ -289,7 +287,6 @@ const getNumberOfCasesDELETED = async (periodicity) => {
             WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
-console.log(query)
     const [result] = await pool.query(query);
     return result[0].count;
 }
@@ -328,23 +325,22 @@ const getNumberOfCasesAssignedTech = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
             FROM vw_cases
-            WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
             FROM vw_cases
-            WHERE status_case_id != ${STATUS_CASE.UNNASIGNED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
-
     const [result] = await pool.query(query);
     return result[0].count;
 }
@@ -381,20 +377,20 @@ const getNumberOfCasesOpenedDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
     `;
 
     if (periodicity === 2) {
         query = `
             SELECT COUNT(*) AS count
             FROM vw_cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND customer_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
         `;
     } else if (periodicity === 3) {
         query = `
             SELECT COUNT(*) AS count
             FROM vw_cases
-            WHERE status_case_id <> ${STATUS_CASE.UNNASIGNED} AND status_case_id <> ${STATUS_CASE.CANCELLED} AND status_case_id <> ${STATUS_CASE.DELETED} AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         `;
     }
 
