@@ -3,6 +3,7 @@ const { body, param } = require('express-validator');
 
 const multer = require('multer');
 const validateRequest = require('../middleware/validateRequest');
+const { authorizeCaseAccess } = require('../middleware/authenticate');
 
 const { getAllCases, createCase, updateUrlViewer, updateOrderNumber, assignedCase, uploadMultipleFiles, addMessagesCase, getCaseById, getMessageCases, getFilesCases, deleteCase, deleteManyCases, deleteFile } = require('../controllers/cases.controller');
 
@@ -19,16 +20,19 @@ router.post('/addCase', upload.single('attachmentTreatmentType'), [
 router.put('/updateUrlViewer/:id', [
     param("id").notEmpty().withMessage("Id is required"),
     body("urlViewer").notEmpty().withMessage("URL Viewer is required"),
-    validateRequest
+    validateRequest,
+    authorizeCaseAccess
 ], updateUrlViewer);
 router.put('/updateOrderNumber/:id', [
     param("id").notEmpty().withMessage("Id is required"),
     body("orderNumber").notEmpty().withMessage("Order Number is required"),
-    validateRequest
+    validateRequest,
+    authorizeCaseAccess
 ], updateOrderNumber);
 router.put('/assignedCase/:id', [
     param("id").notEmpty().withMessage("Id is required"),
-    validateRequest
+    validateRequest,
+    authorizeCaseAccess
 ], assignedCase);
 router.post('/uploadMultipleFiles', upload.array('attachments', 5), [
     body("caseId").notEmpty().withMessage("Case ID is required"),
@@ -41,19 +45,23 @@ router.post('/addMessagesCase', [
 ], addMessagesCase);
 router.get('/getCaseById/:id',[
     param("id").notEmpty().withMessage("Id is required"),
-    validateRequest
+    validateRequest,
+    authorizeCaseAccess
 ], getCaseById)
 router.get('/getMessageCases/:id', [
     param("id").notEmpty().withMessage("Id is required"),
-    validateRequest
+    validateRequest,
+    authorizeCaseAccess
 ], getMessageCases);
 router.get('/getFilesCases/:id', [
     param("id").notEmpty().withMessage("Id is required"),
-    validateRequest
+    validateRequest,
+    authorizeCaseAccess
 ], getFilesCases);
 router.delete('/deleteCase/:id', [
     param("id").notEmpty().withMessage("Id is required"),
-    validateRequest
+    validateRequest,
+    authorizeCaseAccess
 ], deleteCase)
 router.put('/deleteManyCases', [
     body("ids").notEmpty().withMessage("Ids is required"),
@@ -61,7 +69,8 @@ router.put('/deleteManyCases', [
 ], deleteManyCases)
 router.delete('/deleteFile/:id', [
     param("id").notEmpty().withMessage("Id is required"),
-    validateRequest
+    validateRequest,
+    authorizeCaseAccess
 ], deleteFile)
 
 module.exports = router;

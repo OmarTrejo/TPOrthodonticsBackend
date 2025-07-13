@@ -3,6 +3,7 @@ const { body, param } = require('express-validator');
 
 const validateRequest = require('../middleware/validateRequest');
 const { getAllPermissions, updateManyPermissions } = require('../controllers/permissions.controller');
+const { requireAdminRole } = require('../middleware/authenticate');
 
 const router = Router();
 
@@ -23,7 +24,8 @@ const router = Router();
 router.get('/getAll', getAllPermissions);
 router.put('/updatePermissions', [
     body().isArray().withMessage('El cuerpo de la petición debe ser un arreglo'),
-    validateRequest
+    validateRequest,
+    requireAdminRole
 ], updateManyPermissions);
 
 module.exports = router;
