@@ -373,6 +373,19 @@ const addMessagesCase = async (req, res, next) => {
     const user_id = req.user.id;
 
     try {
+        // Verificar si el usuario está asignado al caso
+        const [caseData] = await pool.query('SELECT customer_id, tech_id FROM cases WHERE id = ? LIMIT 1', [caseId]);
+        
+        if (caseData.length === 0) {
+            return next(createError("Case not found", ["The case does not exist"], req.traceId, req.originalUrl));
+        }
+        
+        const { customer_id, tech_id } = caseData[0];
+        
+        // Verificar si el usuario actual es el doctor asignado o el tech asignado
+        if (user_id !== customer_id && user_id !== tech_id) {
+            return next(createError("Access denied", ["You are not authorized to add messages to this case"], req.traceId, req.originalUrl));
+        }
 
         const [result] = await pool.query(
             'INSERT INTO messages_case (case_id, user_id, status_case_id, message) VALUES (?, ?, ?, ?)',
