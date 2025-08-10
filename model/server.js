@@ -3,6 +3,7 @@ const cors = require('cors');
 const errorHandler = require('../middleware/errorHandler');
 const authenticateUser = require('../middleware/auth');
 const bodyParser = require('body-parser');
+const rateLimit = require('express-rate-limit');
 
 class Server {
 
@@ -40,6 +41,13 @@ class Server {
 
         this.app.use( bodyParser.json({ limit: '10mb' })  );
 
+        this.app.use( bodyParser.urlencoded({ limit: '10mb', extended: true }) );
+
+        this.app.use(rateLimit({
+            windowMs: 1 * 60 * 1000, // 15 minutes
+            max: 20, // limit each IP to 100 requests per windowMs
+            message: 'Too many requests from this IP, please try again later.'
+        }));
         // JWT auth
         // this.app.use(authenticateUser); // Esto no, lo aplica a todas
     }

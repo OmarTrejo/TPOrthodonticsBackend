@@ -3,6 +3,7 @@ const { body, param } = require('express-validator');
 const validateRequest = require('../middleware/validateRequest');
 
 const { getRequestsAccess, approvedRequests, denyAccess } = require('../controllers/access.controller');
+const { requireSupportRole } = require('../middleware/authenticate');
 
 const router = Router();
 
@@ -12,7 +13,8 @@ router.get('/RequestAccess', getRequestsAccess);
 router.post('/ApprovedRequest/:id', [
     param('id', 'El id es obligatorio').not().isEmpty(),
     param('id', 'El id debe ser un número').isNumeric(),
-    validateRequest
+    validateRequest,
+    requireSupportRole
 ], approvedRequests);
 /**
  * @TODO Deny access to platform
@@ -21,7 +23,8 @@ router.post('/ApprovedRequest/:id', [
 router.delete('/deny/:id', [
     param('id', 'El id es obligatorio').not().isEmpty(),
     param('id', 'El id debe ser un número').isNumeric(),
-    validateRequest
+    validateRequest,
+    requireSupportRole
 ], denyAccess);
 
 module.exports = router;

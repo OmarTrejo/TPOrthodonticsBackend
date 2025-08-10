@@ -63,7 +63,7 @@ const login = async (req, res, next) => {
         }
 
         // Create token access
-        const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET, { expiresIn: '12h' });
+        const token = jwt.sign({ id: user.id, role_id: user.role_id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '12h' });
 
         // Consultar el role del usuario
         const [role] = await pool.query('SELECT id, role_name, status FROM role_user WHERE id = ? LIMIT 1', [user.role_id]);
