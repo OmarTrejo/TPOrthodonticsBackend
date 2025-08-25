@@ -51,38 +51,38 @@ const getKPIs = async (req, res, next) => {
         if (user.role_id === ROLES_USER.ADMIN) {
 
             // KPI 2 Opened
-            const kpi2 = await getNumberOfCasesOpened(periodicity);
+            const kpi2 = await getNumberOfCasesOpened();
             const indicator2 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
 
             // KPI 3 Unnasigned
-            const kpi3 = await getNumberOfCasesUnnasigned(periodicity);
-            const indicator3 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
+            const kpi3 = await getNumberOfCasesUnnasigned();
+            const indicator3 = kpi3 > 5 ? "bad" : (kpi2 < 1 ? "good" : "neutral");
             
-            // KPI 4 DELETED
-            const kpi4 = await getNumberOfCasesDELETED(periodicity);
-            const indicator4 = kpi2 > 10 ? "good" : (kpi2 < 2 ? "bad" : "neutral");
+            // KPI 4 Now is completed
+            const kpi4 = await getNumberOfCasesCompleted();
+            const indicator4 = kpi4 > 10 ? "good" : (kpi2 < 2 ? "bad" : "neutral");
             
             response = [
                 {
-                    title: `Cases opened ${periodicity_name}`,
-                    description: `Number of cases opened`,
+                    title: `Cases In-process`,
+                    description: `These are the cases that have already been assigned and are currently being worked on`,
                     value: kpi2,
                     indicator: indicator2, // good, bad, or neutral
                     statusId: 0
                 },
                 {
-                    title: `Cases unnasigned ${periodicity_name}`,
-                    description: `Number of cases not assidned to tech `,
+                    title: `Cases Unassigned`,
+                    description: `These are cases that the doctor has already submitted or uploaded but are not yet in process nor assigned to any technician`,
                     value: kpi3,
                     indicator: indicator3, // good, bad, or neutral
                     statusId: STATUS_CASE.UNNASIGNED
                 },
                 {
-                    title: `Cases DELETED ${periodicity_name}`,
-                    description: "Number of cases are DELETED",
+                    title: `Cases Completed`,
+                    description: "These are the cases that have already been completed and are ready",
                     value: kpi4,
                     indicator: indicator4, // good, bad, or neutral
-                    statusId: STATUS_CASE.DELETED
+                    statusId: STATUS_CASE.COMPLETED
                 }
             ];
         } else if (user.role_id === ROLES_USER.TECH) {
@@ -220,73 +220,73 @@ const getNumberOfCases = async (periodicity) => {
     const [result] = await pool.query(query);
     return result[0].count;
 }
-const getNumberOfCasesOpened = async (periodicity) => {
+const getNumberOfCasesOpened = async () => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED}, ${STATUS_CASE.COMPLETED} ) AND is_deleted = '0'
     `;
 
-    if (periodicity === 2) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
-        `;
-    } else if (periodicity === 3) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `;
-    }
+    // if (periodicity === 2) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED}, ${STATUS_CASE.COMPLETED} ) AND is_deleted = '0' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //     `;
+    // } else if (periodicity === 3) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED}, ${STATUS_CASE.COMPLETED} ) AND is_deleted = '0' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    //     `;
+    // }
 
     const [result] = await pool.query(query);
     return result[0].count;
 }
-const getNumberOfCasesUnnasigned = async (periodicity) => {
+const getNumberOfCasesUnnasigned = async () => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} 
     `;
 
-    if (periodicity === 2) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
-        `;
-    } else if (periodicity === 3) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `;
-    }
+    // if (periodicity === 2) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //     `;
+    // } else if (periodicity === 3) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    //     `;
+    // }
     const [result] = await pool.query(query);
     return result[0].count;
 }
-const getNumberOfCasesDELETED = async (periodicity) => {
+const getNumberOfCasesCompleted = async () => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id = ${STATUS_CASE.COMPLETED}
     `;
 
-    if (periodicity === 2) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
-        `;
-    } else if (periodicity === 3) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `;
-    }
+    // if (periodicity === 2) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //     `;
+    // } else if (periodicity === 3) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    //     `;
+    // }
     const [result] = await pool.query(query);
     return result[0].count;
 }
@@ -301,22 +301,22 @@ const getNumberOfCasesDELETEDTech = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id}
     `;
 
-    if (periodicity === 2) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
-        `;
-    } else if (periodicity === 3) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `;
-    }
+    // if (periodicity === 2) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //     `;
+    // } else if (periodicity === 3) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    //     `;
+    // }
 
     const [result] = await pool.query(query);
     return result[0].count;
@@ -325,22 +325,22 @@ const getNumberOfCasesAssignedTech = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id}
     `;
 
-    if (periodicity === 2) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
-        `;
-    } else if (periodicity === 3) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `;
-    }
+    // if (periodicity === 2) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //     `;
+    // } else if (periodicity === 3) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    //     `;
+    // }
     const [result] = await pool.query(query);
     return result[0].count;
 }
@@ -377,22 +377,22 @@ const getNumberOfCasesOpenedDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND customer_id = ${id}
     `;
 
-    if (periodicity === 2) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND customer_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
-        `;
-    } else if (periodicity === 3) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `;
-    }
+    // if (periodicity === 2) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND customer_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //     `;
+    // } else if (periodicity === 3) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND customer_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    //     `;
+    // }
 
     const [result] = await pool.query(query);
     return result[0].count;
@@ -401,22 +401,22 @@ const getNumberOfCasesUnnasignedDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED}
     `;
 
-    if (periodicity === 2) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
-        `;
-    } else if (periodicity === 3) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `;
-    }
+    // if (periodicity === 2) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //     `;
+    // } else if (periodicity === 3) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.UNNASIGNED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    //     `;
+    // }
 
     const [result] = await pool.query(query);
     return result[0].count;
@@ -425,22 +425,22 @@ const getNumberOfCasesDELETEDDoctor = async (periodicity, id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED}
     `;
 
-    if (periodicity === 2) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
-        `;
-    } else if (periodicity === 3) {
-        query = `
-            SELECT COUNT(*) AS count
-            FROM vw_cases
-            WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `;
-    }
+    // if (periodicity === 2) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //     `;
+    // } else if (periodicity === 3) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE customer_id = ${id} AND status_case_id = ${STATUS_CASE.DELETED} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    //     `;
+    // }
 
     const [result] = await pool.query(query);
     return result[0].count;

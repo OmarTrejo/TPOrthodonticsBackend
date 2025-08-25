@@ -18,6 +18,11 @@ const requireAdminRole = (req, res, next) => {
     next();
 }
 
+const requireAdminOrTechRole = (req, res, next) => {
+    if (req.user.role_id !== ROLES_USER.ADMIN && req.user.role_id !== ROLES_USER.TECH) return res.status(403).json({ message: 'Only administrators or techs are allowed to access this resource.' });
+    next();
+}
+
 const authorizeCaseAccess = async (req, res, next) => {
     const caseId = req.params.id;
     try {
@@ -53,4 +58,4 @@ const requireSupportRole = (req, res, next) => {
   next();
 };
 
-module.exports = { authorizeCaseAccess, requireAdminRole, requireSupportRole };
+module.exports = { authorizeCaseAccess, requireAdminRole, requireSupportRole, requireAdminOrTechRole };

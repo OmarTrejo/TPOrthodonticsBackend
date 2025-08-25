@@ -48,34 +48,14 @@ const getAllCases = async (req, res, next) => {
             delete transformedFilters.statusId;
         }
 
-        // Procesar periodicity
-        if (transformedFilters.periodicity) {
-            const periodicity = parseInt(transformedFilters.periodicity, 10);
-            const now = new Date();
-            let fromDate;
-
-            if (periodicity === 1) {
-                fromDate = new Date(now.getFullYear(), 0, 1);
-            } else if (periodicity === 2) {
-                fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            } else if (periodicity === 3) {
-                fromDate = new Date(now);
-                fromDate.setDate(fromDate.getDate() - 7);
-            }
-
-            const formattedDate = fromDate.toISOString().slice(0, 19).replace('T', ' ');
-            transformedFilters.created_at_from = formattedDate;
-
-            // Solo agregar excludeStatuses de periodicity si no hay status_case_id definido
-            if (!transformedFilters.status_case_id) {
-                transformedFilters.excludeStatuses = [
-                    STATUS_CASE.UNNASIGNED,
-                    STATUS_CASE.CANCELLED,
-                    STATUS_CASE.DELETED
-                ];
-            }
-
-            delete transformedFilters.periodicity;
+        // Solo agregar excludeStatuses de periodicity si no hay status_case_id definido
+        if (!transformedFilters.status_case_id) {
+            transformedFilters.excludeStatuses = [
+                STATUS_CASE.UNNASIGNED,
+                STATUS_CASE.CANCELLED,
+                STATUS_CASE.DELETED,
+                STATUS_CASE.COMPLETED,
+            ];
         }
 
 

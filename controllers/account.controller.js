@@ -110,12 +110,12 @@ const getMyAccount = async (req, res, next) => {
  */
 const updateProfile = async(req, res, next) => {
     const  id = req.user.id;
-    const { fullName, phoneNumber, notifyByEmail, notifyByWhatsApp, notifyBySms, onNewCase, onNewComment, onNewAssignment, onNewAccessRequest } = req.body;
+    const { fullName, phoneNumber, notifyByEmail, notifyByWhatsApp, notifyBySms, onNewCase, onNewComment, onNewAssignment, onNewAccessRequest, customerId } = req.body;
 
     try 
     {   
         // Update user data
-        await pool.query('UPDATE users SET fullname = ?, phone_number = ? WHERE id = ?', [fullName, phoneNumber, id]);
+        await pool.query('UPDATE users SET fullname = ?, phone_number = ?, customer_id = ? WHERE id = ?', [fullName, phoneNumber, customerId, id]);
 
         // Update conf_notification
         await pool.query('UPDATE conf_notification SET email_enabled = ?, whatsapp = ?, sms_enabled = ?, new_case = ?, new_comment = ?, new_assignment = ?, new_access_request = ? WHERE user_id = ?', [notifyByEmail, notifyByWhatsApp, notifyBySms, onNewCase, onNewComment, onNewAssignment, onNewAccessRequest, id]);

@@ -3,7 +3,7 @@ const { body, param } = require('express-validator');
 
 const { getUsers, addUser, getUserById, updateUser, updateStatus, deleteUser, getLogs, deletedMany, changePassword, disabledMFA } = require('../controllers/user.controller');
 const validateRequest = require('../middleware/validateRequest');
-const { requireAdminRole } = require('../middleware/authenticate');
+const { requireAdminRole, requireAdminOrTechRole } = require('../middleware/authenticate');
 
 const router = Router();
 
@@ -16,7 +16,7 @@ router.post('/addUser', [
     validateRequest,
     requireAdminRole
 ], addUser);
-router.get('/getAll', requireAdminRole, getUsers);
+router.get('/getAll', requireAdminOrTechRole, getUsers);
 router.get('/getById/:id', [
     param("id").notEmpty().withMessage("Id is required"),
     param('id', 'El id debe ser un número').isNumeric(),
