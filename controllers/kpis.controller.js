@@ -96,15 +96,19 @@ const getKPIs = async (req, res, next) => {
             
             // KPI 3 Opened
             const kpi3 = await getNumberOfCasesUnassignedTech();
-            const indicator3 = kpi3 > 3 ? "bad" : (kpi2 < 1 ? "good" : "neutral");
+            const indicator3 = kpi3 > 3 ? "bad" : (kpi3 < 1 ? "good" : "neutral");
+            
+            // KPI 4 New Assigned Cases
+            const kpi4 = await getNumberOfCasesNewlyAssignedTech(user_id);
+            const indicator4 = kpi4 > 3 ? "good" : (kpi4 < 1 ? "neutral" : "good");
             
             response = [
                 {
                     title: `New Assigned cases`,
                     description: `Where the user can see the new cases that have been assigned to them for follow-up`,
-                    value: kpi3,
-                    indicator: indicator3, // good, bad, or neutral
-                    statusId: STATUS_CASE.UNNASIGNED
+                    value: kpi4,
+                    indicator: indicator4, // good, bad, or neutral
+                    statusId: STATUS_CASE.IN_PROGRESS
                 },
                 {
                     title: `Unassigned Cases`,
@@ -360,6 +364,17 @@ const getNumberOfCasesUnassignedTech = async () => {
     //         WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
     //     `;
     // }
+
+    const [result] = await pool.query(query);
+    return result[0].count;
+}
+
+const getNumberOfCasesNewlyAssignedTech = async (tech_id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM vw_cases
+        WHERE tech_id = ${tech_id} AND updated_at >= DATE_SUB(NOW(), INTERVAL 3 DAY)
+    `;
 
     const [result] = await pool.query(query);
     return result[0].count;
