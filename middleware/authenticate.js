@@ -8,7 +8,7 @@ const isCaseOwnedByUser = (caseItem, user) => {
   if (role_id === ROLES_USER.SUPPORT) return false; // Optional: block support
 
   if (role_id === ROLES_USER.DOCTOR && caseItem.customer_id !== userId) return false;
-  if (role_id === ROLES_USER.TECH && caseItem.tech_id !== userId) return false;
+  if (role_id === ROLES_USER.TECH && caseItem.tech_id !== userId && caseItem.tech_id !== null) return false;
 
   return true; // If none of the above conditions fail
 };

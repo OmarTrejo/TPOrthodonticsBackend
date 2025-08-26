@@ -72,10 +72,15 @@ const paginateQuery = async (baseQuery, countQuery, filters, page, pageSize, ord
                 delete filters.status_case_id;
             }
 
+            if (filters.customWhere) {
+                strictConditions.push(filters.customWhere);
+                delete filters.customWhere;
+            }
+
             // Aquí iteramos todos los filtros restantes para flexibleConditions
             Object.keys(filters).forEach((key) => {
                 // Excluir las keys ya manejadas como estrictas
-                if (key !== 'is_deleted' && key !== 'userId' && key !== 'seen' && key !== 'excludeStatuses' && key !== 'role_id' && key !== 'customer_id' && key !== 'tech_id') {
+                if (key !== 'is_deleted' && key !== 'userId' && key !== 'seen' && key !== 'excludeStatuses' && key !== 'role_id' && key !== 'customer_id' && key !== 'tech_id' && key !== 'customWhere') {
                     // Caso especial para created_at_from
                     if (key === 'created_at_from') {
                         flexibleConditions.push(`created_at >= ?`);

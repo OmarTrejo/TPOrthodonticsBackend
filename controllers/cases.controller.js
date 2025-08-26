@@ -38,7 +38,7 @@ const getAllCases = async (req, res, next) => {
             const statusId = parseInt(transformedFilters.statusId, 10);
             if (statusId === 0) {
                 // Excluir 12 y 20 porque 0 significa "todos menos esos"
-                transformedFilters.excludeStatuses = [12, 20];
+                transformedFilters.excludeStatuses = [STATUS_CASE.CANCELLED, STATUS_CASE.DELETED, STATUS_CASE.COMPLETED, STATUS_CASE.UNNASIGNED ];
                 delete transformedFilters.status_case_id;
             } else {
                 // statusId específico: mostrar solo ese status
@@ -48,17 +48,14 @@ const getAllCases = async (req, res, next) => {
             delete transformedFilters.statusId;
         }
 
+
         // Solo agregar excludeStatuses de periodicity si no hay status_case_id definido
         if (!transformedFilters.status_case_id) {
             transformedFilters.excludeStatuses = [
-                STATUS_CASE.UNNASIGNED,
                 STATUS_CASE.CANCELLED,
                 STATUS_CASE.DELETED,
-                STATUS_CASE.COMPLETED,
             ];
         }
-
-
 
         // Obtener datos paginados
         const filtersToUse = { ...transformedFilters };
@@ -67,7 +64,7 @@ const getAllCases = async (req, res, next) => {
         }
 
         if (user[0].role_id == ROLES_USER.TECH) {
-            filtersToUse.tech_id = userId;
+            filtersToUse.customWhere = `(tech_id = ${userId} OR (tech_id IS NULL AND status_case_id = ${STATUS_CASE.UNNASIGNED}))`;
         }
 
         const paginatedData = await paginateQuery(
@@ -274,6 +271,43 @@ const updateOrderNumber = async (req, res, next) => {
         systemLogs(user_id, "Row updated add Order Number", id, MODULES.CASES);
 
         res.status(200).json({ message: 'Update case successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * TODO update only the order number 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+const updateCustomerIdFromCase = async (req, res, next) => {
+    const { id } = req.params;
+    const { customerId } = req.body;
+    const user_id = req.user.id;
+
+    try {
+
+        const [userData] = await pool.query('SELECT customer_id FROM cases WHERE id = ? LIMIT 1', [id]);
+        
+        if (userData.length === 0) {
+            return next(createError("Case not found", ["The case does not exist"], req.traceId, req.originalUrl));
+        }
+
+        const { customer_id } = userData[0];
+
+        // Update case with id
+        const [result] = await pool.query('UPDATE users SET customer_id = ? WHERE id = ?', [customerId, customer_id]);
+        if (result.affectedRows === 0) {
+            return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
+        }
+
+        // Guardar logs del sistema
+        systemLogs(user_id, "Row updated add user ", id, MODULES.CASES);
+
+        res.status(200).json({ message: 'Update account number successfully' });
     } catch (error) {
         next(error);
     }
@@ -570,7 +604,7 @@ const getCaseById = async (req, res, next) => {
         const [organization] = await pool.query('SELECT id, country FROM countries WHERE id = ? LIMIT 1', [caseData.organization_id]);
 
         // Get doctor
-        const [doctor] = await pool.query('SELECT id, fullname, email FROM users WHERE id = ? LIMIT 1', [caseData.customer_id]);
+        const [doctor] = await pool.query('SELECT id, fullname, email, customer_id FROM users WHERE id = ? LIMIT 1', [caseData.customer_id]);
 
         // Get tech
         let tech = { id: null, fullname: null, email: null };
@@ -613,7 +647,8 @@ const getCaseById = async (req, res, next) => {
             },
             doctor: {
                 id: doctor[0].id,
-                fullName: doctor[0].fullname
+                fullName: doctor[0].fullname,
+                customerId: doctor[0].customer_id
             },
             tech,
             createdOn: formattedDate(caseData.created_at)
@@ -732,5 +767,6 @@ module.exports = {
     getFilesCases,
     deleteCase,
     deleteManyCases,
-    deleteFile
+    deleteFile, 
+    updateCustomerIdFromCase
 }

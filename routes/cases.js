@@ -5,7 +5,7 @@ const multer = require('multer');
 const validateRequest = require('../middleware/validateRequest');
 const { authorizeCaseAccess } = require('../middleware/authenticate');
 
-const { getAllCases, createCase, updateUrlViewer, updateOrderNumber, assignedCase, uploadMultipleFiles, addMessagesCase, getCaseById, getMessageCases, getFilesCases, deleteCase, deleteManyCases, deleteFile } = require('../controllers/cases.controller');
+const { getAllCases, createCase, updateUrlViewer, updateOrderNumber, assignedCase, uploadMultipleFiles, addMessagesCase, getCaseById, getMessageCases, getFilesCases, deleteCase, deleteManyCases, deleteFile, updateCustomerIdFromCase } = require('../controllers/cases.controller');
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -29,6 +29,12 @@ router.put('/updateOrderNumber/:id', [
     validateRequest,
     authorizeCaseAccess
 ], updateOrderNumber);
+router.put('/updateDoctorCustomerId/:id', [
+    param("id").notEmpty().withMessage("Id is required"),
+    body("customerId").notEmpty().withMessage("Account Number is required"),
+    validateRequest,
+    authorizeCaseAccess
+], updateCustomerIdFromCase);
 router.put('/assignedCase/:id', [
     param("id").notEmpty().withMessage("Id is required"),
     validateRequest,

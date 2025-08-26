@@ -87,27 +87,45 @@ const getKPIs = async (req, res, next) => {
             ];
         } else if (user.role_id === ROLES_USER.TECH) {
             // KPI 1 Total
-            const kpi1 = await getNumberOfCasesAssignedTech(periodicity, user_id);
-            const indicator1 = "neutral";
+            const kpi1 = await getNumberOfCasesAssignedTech(user_id);
+            const indicator1 = "good";
 
             // KPI 2 Opened
-            const kpi2 = await getNumberOfCasesDELETEDTech(periodicity, user_id);
+            const kpi2 = await getNumberOfCasesCompletedTech(user_id);
             const indicator2 = kpi2 > 10 ? "bad" : (kpi2 < 2 ? "neutral" : "good");
+            
+            // KPI 3 Opened
+            const kpi3 = await getNumberOfCasesUnassignedTech();
+            const indicator3 = kpi3 > 3 ? "bad" : (kpi2 < 1 ? "good" : "neutral");
             
             response = [
                 {
-                    title: `Cases assigned ${periodicity_name}`,
-                    description: `Number of cases assigned`,
-                    value: kpi1,
-                    indicator: indicator1, // good, bad, or neutral
-                    statusId: 0
+                    title: `New Assigned cases`,
+                    description: `Where the user can see the new cases that have been assigned to them for follow-up`,
+                    value: kpi3,
+                    indicator: indicator3, // good, bad, or neutral
+                    statusId: STATUS_CASE.UNNASIGNED
                 },
                 {
-                    title: `Cases DELETED ${periodicity_name}`,
-                    description: `Number of cases DELETED`,
+                    title: `Unassigned Cases`,
+                    description: `Where the user can see the cases that are not yet assigned and can assign them from here`,
+                    value: kpi3,
+                    indicator: indicator3, // good, bad, or neutral
+                    statusId: STATUS_CASE.UNNASIGNED
+                },
+                {
+                    title: `Cases In Progress`,
+                    description: `The cases that are already assigned and currently in progress`,
+                    value: kpi1,
+                    indicator: indicator1, // good, bad, or neutral
+                    statusId: STATUS_CASE.IN_PROGRESS
+                },
+                {
+                    title: `Cases Completed`,
+                    description: `The cases that have already been completed`,
                     value: kpi2,
                     indicator: indicator2, // good, bad, or neutral
-                    statusId: STATUS_CASE.DELETED
+                    statusId: STATUS_CASE.COMPLETED
                 }
             ];
         } else if (user.role_id === ROLES_USER.DOCTOR) {
@@ -125,21 +143,21 @@ const getKPIs = async (req, res, next) => {
             
             response = [
                 {
-                    title: `Cases opened ${periodicity_name}`,
+                    title: `Cases opened`,
                     description: `Number of cases opened`,
                     value: kpi2,
                     indicator: indicator2, // good, bad, or neutral
                     statusId: 0
                 },
                 {
-                    title: `Cases unnasigned ${periodicity_name}`,
-                    description: `Number of cases not assidned to tech `,
+                    title: `Cases unnasigned`,
+                    description: `These are cases that the doctor has already submitted or uploaded but are not yet in process nor assigned to any technician`,
                     value: kpi3,
                     indicator: indicator3,// good, bad, or neutral
                     statusId: STATUS_CASE.UNNASIGNED
                 },
                 {
-                    title: `Cases DELETED ${periodicity_name}`,
+                    title: `Cases DELETED`,
                     description: "Number of cases are DELETED",
                     value: kpi4,
                     indicator: indicator4, // good, bad, or neutral
@@ -297,11 +315,11 @@ const getNumberOfCasesCompleted = async () => {
  * @param {*} id 
  * @returns 
  */
-const getNumberOfCasesDELETEDTech = async (periodicity, id) => {
+const getNumberOfCasesCompletedTech = async (id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id}
+        WHERE status_case_id = ${STATUS_CASE.COMPLETED} AND tech_id = ${id}
     `;
 
     // if (periodicity === 2) {
@@ -321,18 +339,43 @@ const getNumberOfCasesDELETEDTech = async (periodicity, id) => {
     const [result] = await pool.query(query);
     return result[0].count;
 }
-const getNumberOfCasesAssignedTech = async (periodicity, id) => {
+
+const getNumberOfCasesUnassignedTech = async () => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id}
+        WHERE status_case_id = ${STATUS_CASE.UNNASIGNED} 
     `;
 
     // if (periodicity === 2) {
     //     query = `
     //         SELECT COUNT(*) AS count
     //         FROM vw_cases
-    //         WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //         WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+    //     `;
+    // } else if (periodicity === 3) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id = ${STATUS_CASE.DELETED} AND tech_id = ${id} AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    //     `;
+    // }
+
+    const [result] = await pool.query(query);
+    return result[0].count;
+}
+const getNumberOfCasesAssignedTech = async (id) => {
+    let query = `
+        SELECT COUNT(*) AS count
+        FROM vw_cases
+        WHERE status_case_id IN (${STATUS_CASE.IN_PROGRESS}) AND is_deleted = '0' AND tech_id = ${id}
+    `;
+
+    // if (periodicity === 2) {
+    //     query = `
+    //         SELECT COUNT(*) AS count
+    //         FROM vw_cases
+    //         WHERE status_case_id NOT IN (${STATUS_CASE.UNNASIGNED}, ${STATUS_CASE.CANCELLED}, ${STATUS_CASE.DELETED}, ${STATUS_CASE.COMPLETED} ) AND is_deleted = '0' AND tech_id = ${id} AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
     //     `;
     // } else if (periodicity === 3) {
     //     query = `
