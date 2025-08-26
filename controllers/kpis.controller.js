@@ -373,7 +373,7 @@ const getNumberOfCasesNewlyAssignedTech = async (tech_id) => {
     let query = `
         SELECT COUNT(*) AS count
         FROM vw_cases
-        WHERE tech_id = ${tech_id} AND updated_at >= DATE_SUB(NOW(), INTERVAL 3 DAY)
+        WHERE tech_id = ${tech_id} AND created_at >= DATE_SUB(NOW(), INTERVAL 3 DAY)
     `;
 
     const [result] = await pool.query(query);
