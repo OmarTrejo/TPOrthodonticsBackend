@@ -108,7 +108,8 @@ const getKPIs = async (req, res, next) => {
                     description: `Where the user can see the new cases that have been assigned to them for follow-up`,
                     value: kpi4,
                     indicator: indicator4, // good, bad, or neutral
-                    statusId: STATUS_CASE.IN_PROGRESS
+                    statusId: STATUS_CASE.IN_PROGRESS,
+                    periodicity: 3
                 },
                 {
                     title: `Unassigned Cases`,

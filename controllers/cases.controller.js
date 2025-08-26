@@ -49,7 +49,14 @@ const getAllCases = async (req, res, next) => {
         }
 
 
-        // Solo agregar excludeStatuses de periodicity si no hay status_case_id definido
+        // Agregar filtro de periodicity si viene en los parámetros
+        if (transformedFilters.periodicity) {
+            const days = parseInt(transformedFilters.periodicity, 10);
+            transformedFilters.created_at_from = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+            delete transformedFilters.periodicity;
+        }
+
+        // Solo agregar excludeStatuses si no hay status_case_id definido
         if (!transformedFilters.status_case_id) {
             transformedFilters.excludeStatuses = [
                 STATUS_CASE.CANCELLED,
