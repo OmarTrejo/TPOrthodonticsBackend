@@ -55,7 +55,6 @@ router.put('/updatePassword', [
     body("password").notEmpty().withMessage("Password is required"),
     body("password").isLength({min:8}).withMessage("Password must be at least 8 characters long"),
     validateRequest,
-    requireAdminRole
 ], changePassword);
 router.put('/disabledMFA/:id', [
     param("id").notEmpty().withMessage("User Id is required"),
