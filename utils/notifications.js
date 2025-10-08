@@ -1,6 +1,6 @@
 const pool = require("../database/config.js");
 const { MODULES } = require("./constants.js");
-
+const { sendNotificationEmail } = require('../utils/email.js');
 /**
  * TODO Save into database a notifications
  * @param {title} title 
@@ -23,6 +23,7 @@ const sendNotification = async (title, message, transmitter, module, id) => {
 
         // Get all users that have a conf-notification with the action
         const receivers = await getReceivers(title);
+
         // Save into database a notifications
         for (const receiver of receivers) {
             const receiverId = receiver.id;
@@ -31,7 +32,7 @@ const sendNotification = async (title, message, transmitter, module, id) => {
             if(receiver.email_enabled)
             {
                 // Send email to user
-                console.log("Send email to user", receiver.email)
+                await sendNotificationEmail(receiver.email, receiver.fullname, title, message, redirectUrl);
             }
 
             if(receiver.sms_enabled) {
@@ -73,15 +74,24 @@ const getReceivers = async (title) => {
                 WHERE r.role_name IN ('Support') AND cn.new_access_request = 1;
             `;
         }
-        // else if (title === "New message added")
-        // {
-        //     query = `
-        //         SELECT u.id, u.fullname, u.email, u.phone_number FROM users u
-        //         JOIN role_user r ON u.role_id = r.id
-        //         JOIN conf_notification cn ON cn.user_id = u.id
-        //         WHERE r.role_name IN ('Doctor', 'Admin') AND cn.assigned_case = 1;
-        //     `;
-        // }
+        else if (title === "Case assigned to you")
+        {
+            query = `
+                SELECT u.id, u.fullname, u.email, u.phone_number, cn.email_enabled, cn.sms_enabled, cn.whatsapp FROM users u
+                JOIN role_user r ON u.role_id = r.id
+                JOIN conf_notification cn ON cn.user_id = u.id
+                WHERE r.role_name IN ('Doctor', 'Tech') AND cn.new_assignment = 1;
+            `;
+        }
+        else if (title === "New comment added")
+        {
+            query = `
+                SELECT u.id, u.fullname, u.email, u.phone_number, cn.email_enabled, cn.sms_enabled, cn.whatsapp FROM users u
+                JOIN role_user r ON u.role_id = r.id
+                JOIN conf_notification cn ON cn.user_id = u.id
+                WHERE r.role_name IN ('Doctor', 'Tech') AND cn.new_comment = 1;
+            `;
+        }
 
         const [result] = await pool.query(query);
         return result;

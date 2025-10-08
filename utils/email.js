@@ -154,11 +154,40 @@ const sendEmailForgotPassword = async (to, fullname, password, token) => {
   }
 };
 
+const sendNotificationEmail = async (to, fullname, title, message, actionUrl = BASE_URL) => {
+  try {
+    // Cargar el template HTML base
+    const html = fs.readFileSync(
+      path.join(__dirname, "./email/notifications.html"),
+      "utf8"
+    );
+
+    // Reemplazar variables dinámicas
+    const htmlReplaced = replacePlaceholders(html, {
+      fullname,
+      title,
+      message,
+      action_url: actionUrl,
+    });
+
+    // Configurar el correo
+    const mailOptions = buildEmailOptions(to, title, htmlReplaced);
+
+    // Enviar correo
+    await transporter.sendMail(mailOptions);
+    console.log(`Notification email sent to ${to}: ${title}`);
+  } catch (err) {
+    console.error("Error sending notification email:", err);
+  }
+};
+
+
 
 module.exports = {
     sendWelcomeEmail,
     sendAccessRequestEmail,
     sendAccessRequestDenyEmail,
     sendAccessRequestApprovedEmail,
-    sendEmailForgotPassword
+    sendEmailForgotPassword,
+    sendNotificationEmail
 }

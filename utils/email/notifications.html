@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Request Denied</title>
+    <title>{{title}}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             color: #ffffff;
             margin: 0;
             padding: 0;
-            background-color: #2c3e50;
+            background-color: #2c3e50; /* Dark background */
         }
         .container {
             width: 100%;
             max-width: 600px;
             margin: 20px auto;
-            background-color: #34495e;
+            background-color: #34495e; /* Dark gray container */
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -40,7 +40,28 @@
             color: #ecf0f1;
         }
         .body p {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        .highlight {
+            background-color: #1abc9c;
+            color: #2c3e50;
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .cta-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 18px;
+            background-color: #1abc9c;
+            color: #2c3e50;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .cta-button:hover {
+            background-color: #16a085;
         }
         .footer {
             text-align: center;
@@ -48,12 +69,12 @@
             color: #95a5a6;
             margin-top: 30px;
         }
-        a {
-            color: #e74c3c;
-            text-decoration: none;
-        }
         .footer p {
             margin-top: 5px;
+        }
+        a {
+            color: #1abc9c;
+            text-decoration: none;
         }
     </style>
 </head>
@@ -63,17 +84,20 @@
             <img src="cid:logo_image" alt="Logo">
             <h1>TPRX</h1>
         </div>
+
         <div class="body">
             <p>Dear {{fullname}},</p>
-            <p>We regret to inform you that your request to join TPRX has been denied.</p>
-            <p>If you believe this decision was made in error or you need further clarification, please feel free to reach out to our support team.</p>
-            <p>Thank you for your understanding.</p>
-            <p>Best regards,<br>The TPRX Team</p>
+            <p class="highlight">{{title}}</p>
+            <p>{{message}}</p>
+
+            <p>Thank you for your attention.</p>
+            <p>— The TPRX Support Team</p>
         </div>
+
         <div class="footer">
             <p>Developed by: <a href="https://md360.com.mx"><strong>MD 360</strong></a></p>
-            <p>If you didn’t request access, you can ignore this email.</p>
-            <p>&copy; 2025  TP Orthodontics. All rights reserved.</p>
+            <p>If you did not expect this notification, please ignore this email.</p>
+            <p>&copy; 2025 TP Orthodontics. All rights reserved.</p>
         </div>
     </div>
 </body>

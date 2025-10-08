@@ -331,6 +331,9 @@ const assignedCase = async (req, res, next) => {
             return next(createError("Error, please try again later", ["Database connection error"], req.traceId, req.originalUrl));
         }
 
+        // Send notification to tech
+        sendNotification("Case assigned to you", "A new case has been assigned to you. Please review the case details and proceed accordingly.", techId, MODULES.CASES, id);
+
         // Guardar logs del sistema
         systemLogs(techId, "Row updated add Tech", id, MODULES.CASES);
 
@@ -464,6 +467,8 @@ const addMessagesCase = async (req, res, next) => {
             createdOn: formattedDate(messageDataResponse.created_at)
         };
 
+        // Sent notification to new comment
+        sendNotification("New comment added", "A new comment has been added to one of your cases. Please review the discussion for updates or next steps.", user_id, MODULES.CASES, caseId);
 
         res.status(201).json(filteredResponse);
     } catch (error) {
@@ -561,11 +566,10 @@ const getFilesCases = async (req, res, next) => {
         const [results] = await pool.query('SELECT * FROM vw_files_cases WHERE case_id = ? AND status = 1', [id]);
 
         if (results.length === 0) {
-            res.status(200).json([]);
+            return res.status(200).json([]);
         }
 
-        const filteredResponse = results.map((item) => {
-            return {
+        const filteredResponse = results.map((item) => ({
                 id: item.id,
                 url: item.url_file,
                 name: item.file_name,
@@ -573,11 +577,12 @@ const getFilesCases = async (req, res, next) => {
                 extension: item.extension,
                 uploadedDate: formattedDate(item.created_at),
                 caseId: item.case_id,
-            };
-        });
+            })
+        );
 
-        res.status(200).json(filteredResponse);
+        return res.status(200).json(filteredResponse);
     } catch (error) {
+        console.log("Error GetFiles Case:", error)
         next(error);
     }
 }
